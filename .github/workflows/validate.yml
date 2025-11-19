@@ -10,16 +10,18 @@ jobs:
   validate:
     name: Validate Commit
     runs-on: ubuntu-latest
+    container:
+      image: rust:1.83-slim
+      options: --user root
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.83
-          components: rustfmt, clippy
+      - name: Install dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq pkg-config libssl-dev > /dev/null 2>&1
 
       - name: Cache cargo registry
         uses: actions/cache@v4
