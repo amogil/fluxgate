@@ -1,5 +1,5 @@
-1. [ ] Причесать README.md
-2. [ ] Причесать сообщения в логах и справку по --help
-3. [ ] Распилить **F2.**
-4. [ ] Научить агента запускать фунтесты
-5. [ ] Вынести размеры пуллов на апстримы в настройку
+1. [ ] Polish README.md
+2. [ ] Polish log messages and --help output
+3. [ ] Break down **F2.**
+4. [ ] Teach agent to run unit tests
+5. [ ] Move upstream pool sizes to configuration
