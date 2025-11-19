@@ -2092,6 +2092,9 @@ server:
     // Get initial value (subscribe returns immediately with current value)
     assert_eq!(receiver.borrow().server.max_connections, 100);
 
+    // Give watcher time to initialize and start polling
+    tokio::time::sleep(Duration::from_millis(500)).await;
+
     // Update config
     let updated_config = r#"
 version: 1
@@ -2100,7 +2103,10 @@ server:
   bind_address: "127.0.0.1:8080"
   max_connections: 200
 "#;
-    std::fs::write(&config_path, updated_config).expect("write updated config");
+    // Use tokio::fs for better async file I/O
+    tokio::fs::write(&config_path, updated_config).await.expect("write updated config");
+    // Small delay to ensure file system has synced (important in CI/Docker)
+    tokio::time::sleep(Duration::from_millis(200)).await;
 
     // Poll for update: watcher polls every 1s, so we check periodically
     // In CI environments, file system operations may be slower, so we use longer timeout
@@ -2143,6 +2149,9 @@ server:
     assert_eq!(receiver1.borrow().server.max_connections, 100);
     assert_eq!(receiver2.borrow().server.max_connections, 100);
 
+    // Give watcher time to initialize and start polling
+    tokio::time::sleep(Duration::from_millis(500)).await;
+
     // Update config
     let updated_config = r#"
 version: 1
@@ -2151,7 +2160,10 @@ server:
   bind_address: "127.0.0.1:8080"
   max_connections: 300
 "#;
-    std::fs::write(&config_path, updated_config).expect("write updated config");
+    // Use tokio::fs for better async file I/O
+    tokio::fs::write(&config_path, updated_config).await.expect("write updated config");
+    // Small delay to ensure file system has synced (important in CI/Docker)
+    tokio::time::sleep(Duration::from_millis(200)).await;
 
     // Poll for updates: watcher polls every 1s, so we check periodically
     // In CI environments, file system operations may be slower, so we use longer timeout
