@@ -680,12 +680,6 @@ impl TestConfig {
         self
     }
 
-    /// Clear all JWT keys.
-    pub fn clear_jwt_keys(mut self) -> Self {
-        self.jwt_keys.clear();
-        self
-    }
-
     /// Generate the YAML configuration string.
     pub fn to_yaml(&self) -> String {
         use yaml_fields::*;
