@@ -2,6 +2,32 @@
 
 Fluxgate is configured using a YAML file. By default, the proxy looks for `fluxgate.yaml` in the current working directory, but you can override this path using the `--config` command-line option.
 
+## Minimal Example
+
+```yaml
+version: 1
+
+server:
+  bind_address: "0.0.0.0:8080"
+  max_connections: 1024
+
+upstreams:
+  request_timeout_ms: 120000
+  openai-1:
+    request_path: "/openai"
+    target_url: "https://api.openai.com"
+    api_key: "sk-openai-key"
+
+api_keys:
+  static:
+    - id: pr
+      key: 2qqwZ2MrffFMBguNMGVr
+      upstreams:
+        - openai-1
+```
+
+A complete reference configuration is available at [`config/fluxgate.yaml`](../../config/fluxgate.yaml).
+
 ## Configuration File Location
 
 **Default location:** `fluxgate.yaml` in the current working directory
@@ -58,7 +84,7 @@ upstreams:
   request_timeout_ms: 120000
   openai-1:
     request_path: "/openai"
-    target_url: "https://api.openai.com/v1"
+    target_url: "https://api.openai.com"
     api_key: "sk-openai-key"
   anthropic-1:
     request_path: "/anthropic"
@@ -106,4 +132,38 @@ If the configuration file is missing or invalid at startup, Fluxgate uses the fo
 - **`api_keys`**: Empty (no API keys configured)
 
 With this default configuration, the proxy will start but will reject all requests with HTTP 401 since no API keys are configured.
+
+## Environment Variables
+
+Fluxgate supports environment variables for runtime configuration that cannot be set via the YAML configuration file.
+
+### Log Configuration
+
+Log verbosity can be controlled via the `FLUXGATE_LOG` environment variable:
+
+```bash
+export FLUXGATE_LOG=info
+./fluxgate
+```
+
+**Default log level:** `TRACE` (when `FLUXGATE_LOG` is not set)
+
+**Available log levels:** `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`
+
+ANSI coloring of logs can be controlled via the `FLUXGATE_LOG_STYLE` environment variable:
+
+```bash
+export FLUXGATE_LOG_STYLE=never
+./fluxgate
+```
+
+**Values:**
+- `always` - Always use ANSI colors (default)
+- `never` - Never use ANSI colors (useful for CI or scripted runs)
+
+See the [Logging Guide](logging.md) for detailed information about log levels, structured fields, and observability.
+
+## Limitations
+
+The proxy does not support HTTP upgrade mechanisms (such as WebSocket) or the CONNECT method and will reject such requests with `501 Not Implemented`.
 

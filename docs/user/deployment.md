@@ -141,3 +141,69 @@ The key requirements are:
 - Expose port 8080 (or the port configured in your `bind_address`)
 - Ensure the configuration file is accessible and valid
 
+## Client Configuration
+
+To use Fluxgate proxy with OpenAI and Anthropic client libraries, configure the `base_url` to point to the proxy endpoint.
+
+### OpenAI SDK
+
+**Python:**
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="2qqwZ2MrffFMBguNMGVr",  # Your client API key from fluxgate.yaml
+    base_url="http://localhost:8080/openai"
+)
+
+response = client.models.list()
+```
+
+**JavaScript/TypeScript:**
+```typescript
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: '2qqwZ2MrffFMBguNMGVr',  // Your client API key from fluxgate.yaml
+  baseURL: 'http://localhost:8080/openai',
+});
+
+const models = await openai.models.list();
+```
+
+### Anthropic SDK
+
+**Python:**
+```python
+from anthropic import Anthropic
+
+client = Anthropic(
+    api_key="2qqwZ2MrffFMBguNMGVr",  # Your client API key from fluxgate.yaml
+    base_url="http://localhost:8080/anthropic"
+)
+
+message = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+```
+
+**JavaScript/TypeScript:**
+```typescript
+import Anthropic from '@anthropic-ai/sdk';
+
+const anthropic = new Anthropic({
+  apiKey: '2qqwZ2MrffFMBguNMGVr',  // Your client API key from fluxgate.yaml
+  baseURL: 'http://localhost:8080/anthropic',
+});
+
+const message = await anthropic.messages.create({
+  model: 'claude-3-5-sonnet-20241022',
+  max_tokens: 1024,
+  messages: [{ role: 'user', content: 'Hello!' }],
+});
+```
+
+**Note:** Replace `localhost:8080` with your actual proxy host and port. Use the client API key from `api_keys.static[].key` in your `fluxgate.yaml` configuration, not the provider API keys.
+

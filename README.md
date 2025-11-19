@@ -28,105 +28,67 @@ Fluxgate is a high-performance proxy that sits between client applications and l
 
 ## 🚀 Quick Start
 
-### Docker
-
-Fluxgate provides a production-ready Docker image. Build and run:
-
-```bash
-docker build -t fluxgate:latest .
-docker run -d \
-  -p 8080:8080 \
-  -v /path/to/your/fluxgate.yaml:/app/fluxgate.yaml \
-  fluxgate:latest
-```
-
-The executable expects `fluxgate.yaml` in `/app/fluxgate.yaml`. Fluxgate can also be deployed as a standalone binary or using container orchestration platforms like Kubernetes, Docker Compose, and others. See the [Deployment Guide](docs/user/deployment.md) for complete deployment options and examples.
-
-## 📖 Documentation
-
-- **[Deployment Guide](docs/user/deployment.md)** - Complete deployment options: Docker, binary installation, Kubernetes, and orchestration platforms
-- **[Configuration Guide](docs/user/configuration.md)** - Complete configuration reference, parameters, validation rules, and examples
-- **[Authentication Guide](docs/user/authentication.md)** - Static API keys and JWT token authentication setup and usage
-- **[Logging Guide](docs/user/logging.md)** - Log configuration, levels, structured fields, and observability
-
-## ⚙️ Configuration
-
-### Minimal Example
+1. **Create configuration file `fluxgate.yaml` with two providers (OpenAI and Anthropic):**
 
 ```yaml
 version: 1
 
 server:
   bind_address: "0.0.0.0:8080"
-  max_connections: 1024
 
 upstreams:
-  request_timeout_ms: 120000
-  openai-1:
+  openai:
     request_path: "/openai"
-    target_url: "https://api.openai.com/v1"
-    api_key: "sk-openai-key"
+    target_url: "https://api.openai.com"
+    api_key: "sk-proj-abc123xyz789"
+  anthropic:
+    request_path: "/anthropic"
+    target_url: "https://api.anthropic.com"
+    api_key: "sk-ant-api03-abc123xyz789"
 
 api_keys:
   static:
-    - id: pr
-      key: 2qqwZ2MrffFMBguNMGVr
-      upstreams:
-        - openai-1
+    - id: my-key
+      key: "2qqwZ2MrffFMBguNMGVr"
 ```
 
-A complete reference configuration is available at [`config/fluxgate.yaml`](config/fluxgate.yaml).
+- Specify your OpenAI and Anthropic API keys in the `upstreams` section.
+- Generate any string as the client API key in the `api_keys.static` section.
 
-### Hot Reloading
-
-Fluxgate automatically monitors the configuration file by periodically checking for changes and applies validated updates without requiring a restart. When you update the configuration file, the proxy will:
-
-1. Detect the change within 1 second (next polling check)
-2. Validate the new configuration
-3. Apply it automatically if validation succeeds
-4. Reject it and retain the previous configuration if validation fails
-
-Invalid configurations are rejected without interrupting the running process.
-
-## 🔧 Environment Variables
-
-### Log Configuration
-
-Override log verbosity:
+2. **Build and run the container:**
 
 ```bash
-export FLUXGATE_LOG=info
+docker build -t fluxgate:latest .
+docker run -d -p 8080:8080 -v $(pwd)/fluxgate.yaml:/app/fluxgate.yaml fluxgate:latest
 ```
 
-Disable ANSI coloring in logs (useful for CI or scripted runs):
+3. **Test it:**
 
 ```bash
-export FLUXGATE_LOG_STYLE=never
+curl -H "Authorization: Bearer 2qqwZ2MrffFMBguNMGVr" http://localhost:8080/openai/v1/models
 ```
 
-**Default log level:** `TRACE` (when `FLUXGATE_LOG` is not set)
+**Use with OpenAI SDK:**
 
-See the [Logging Guide](docs/user/logging.md) for detailed information about log levels, structured fields, and observability.
+```python
+from openai import OpenAI
 
-## 🔑 Authentication
+client = OpenAI(
+    api_key="2qqwZ2MrffFMBguNMGVr",  # Your client API key from fluxgate.yaml
+    base_url="http://localhost:8080/openai"
+)
 
-Fluxgate supports two authentication methods:
-
-- **Static API Keys** - Simple string-based authentication
-- **JWT Tokens** - Time-limited tokens with signature verification
-
-Both methods use the `Authorization` header with the Bearer scheme:
-
-```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" \
-  http://localhost:8080/openai/v1/models
+response = client.models.list()
 ```
 
-See the [Authentication Guide](docs/user/authentication.md) for detailed setup and usage.
+Fluxgate can also be deployed as a standalone binary or using container orchestration platforms like Kubernetes, Docker Compose, and others. See the [Deployment Guide](docs/user/deployment.md) for complete deployment options and examples.
 
-## ⚠️ Limitations
+## 📖 Documentation
 
-The proxy does not support HTTP upgrade mechanisms (such as WebSocket) or the CONNECT method and will reject such requests with `501 Not Implemented`.
+- **[Deployment Guide](docs/user/deployment.md)** - Complete deployment options: Docker, binary installation, Kubernetes, and orchestration platforms
+- **[Configuration Guide](docs/user/configuration.md)** - Complete configuration reference, parameters, validation rules, hot reloading, and examples
+- **[Authentication Guide](docs/user/authentication.md)** - Static API keys and JWT token authentication setup and usage
+- **[Logging Guide](docs/user/logging.md)** - Log configuration, levels, structured fields, and observability
 
 ## 📝 License
 
