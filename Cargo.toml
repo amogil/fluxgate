@@ -3,7 +3,7 @@ name = "fluxgate"
 version = "0.1.0"
 edition = "2021"
 authors = ["Fluxgate Contributors"]
-description = "High-performance proxy to commercial LLM providers."
+description = "High-performance proxy to LLM providers."
 license = "Apache-2.0"
 
 [dependencies]
