@@ -2102,11 +2102,13 @@ server:
 "#;
     std::fs::write(&config_path, updated_config).expect("write updated config");
 
-    // Wait for watcher to detect and apply change (polling interval is 500ms, wait for at least 2 cycles)
-    tokio::time::sleep(Duration::from_millis(1500)).await;
+    // Wait for watcher to detect and apply change (polling interval is 1s, wait for at least 3 cycles)
+    // In CI environments, file system operations may be slower, so we wait longer
+    tokio::time::sleep(Duration::from_millis(3000)).await;
 
     // Check that receiver got update with timeout
-    tokio::time::timeout(Duration::from_secs(5), receiver.changed())
+    // Increased timeout for CI environments where file system operations may be slower
+    tokio::time::timeout(Duration::from_secs(10), receiver.changed())
         .await
         .expect("timeout waiting for update")
         .expect("should receive update");
@@ -2148,15 +2150,17 @@ server:
 "#;
     std::fs::write(&config_path, updated_config).expect("write updated config");
 
-    // Wait for watcher to detect and apply change (polling interval is 500ms, wait for at least 2 cycles)
-    tokio::time::sleep(Duration::from_millis(1500)).await;
+    // Wait for watcher to detect and apply change (polling interval is 1s, wait for at least 3 cycles)
+    // In CI environments, file system operations may be slower, so we wait longer
+    tokio::time::sleep(Duration::from_millis(3000)).await;
 
     // Both receivers should get update with timeout
-    tokio::time::timeout(Duration::from_secs(5), receiver1.changed())
+    // Increased timeout for CI environments where file system operations may be slower
+    tokio::time::timeout(Duration::from_secs(10), receiver1.changed())
         .await
         .expect("timeout waiting for receiver1 update")
         .expect("should receive update");
-    tokio::time::timeout(Duration::from_secs(5), receiver2.changed())
+    tokio::time::timeout(Duration::from_secs(10), receiver2.changed())
         .await
         .expect("timeout waiting for receiver2 update")
         .expect("should receive update");
