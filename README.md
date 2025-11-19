@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.0+-orange.svg)](https://www.rust-lang.org/)
 
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](buymeacoffee.com/amogilnikov)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/amogilnikov)
 
 </div>
 
@@ -140,11 +140,3 @@ The proxy does not support HTTP upgrade mechanisms (such as WebSocket) or the CO
 ## 📝 License
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
-
----
-
-<div align="center">
-
-**Built with ❤️ using Rust**
-
-</div>
