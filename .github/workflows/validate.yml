@@ -41,8 +41,8 @@ jobs:
 
       - name: Validation passed
         if: success()
-        run: echo "✅ Commit validation passed"
+        run: echo "✅ Passed"
 
       - name: Validation failed
         if: failure()
-        run: echo "❌ Commit validation failed"
+        run: echo "❌ Failed"
