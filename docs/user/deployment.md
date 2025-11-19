@@ -205,5 +205,7 @@ const message = await anthropic.messages.create({
 });
 ```
 
+
+
 **Note:** Replace `localhost:8080` with your actual proxy host and port. Use the client API key from `api_keys.static[].key` in your `fluxgate.yaml` configuration, not the provider API keys.
 
