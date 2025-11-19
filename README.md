@@ -99,7 +99,7 @@ docker run -d -p 8080:8080 -v $(pwd)/fluxgate.yaml:/app/fluxgate.yaml fluxgate:l
 curl -H "Authorization: Bearer <CLIENT_KEY>" http://localhost:8080/openai/v1/models
 ```
 
-**Use with OpenAI SDK:**
+Use with OpenAI SDK:
 
 ```python
 from openai import OpenAI
