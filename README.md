@@ -28,58 +28,27 @@ Fluxgate is a high-performance proxy that sits between client applications and l
 
 ## 🚀 Quick Start
 
-### Installation
-
-Download the latest release bundle, extract it, and run the binary. Fluxgate ships as a single static executable with no runtime dependencies.
-
-### Running
-
-Start the proxy with default configuration:
-
-```bash
-./fluxgate
-```
-
-This starts the proxy using `fluxgate.yaml` in the current working directory and keeps running until you stop it (Ctrl+C or your supervisor).
-
-### Custom Configuration Path
-
-```bash
-./fluxgate --config /etc/fluxgate/fluxgate.yaml
-```
-
 ### Docker
 
-Fluxgate provides a production-ready Docker image. The configuration file must be mounted when running the container.
-
-**Build the image:**
+Fluxgate provides a production-ready Docker image. Build and run:
 
 ```bash
 docker build -t fluxgate:latest .
-```
-
-**Run with configuration file (mount your config):**
-
-```bash
 docker run -d \
   -p 8080:8080 \
   -v /path/to/your/fluxgate.yaml:/app/fluxgate.yaml \
   fluxgate:latest
 ```
 
-The executable is located at `/app/fluxgate` and expects `fluxgate.yaml` in the same directory (`/app/fluxgate.yaml`). The proxy automatically uses `fluxgate.yaml` from the current working directory.
+The executable expects `fluxgate.yaml` in `/app/fluxgate.yaml`. See the [Deployment Guide](docs/user/deployment.md) for detailed instructions.
 
-The Docker image is optimized for production use:
-- **Minimal size** - Multi-stage build with distroless base image
-- **Secure** - Runs as non-root user with minimal attack surface
-- **No build tools** - Only includes the compiled binary and essential runtime dependencies
+### Other Deployment Options
 
-### Process Management
-
-Prefer installing the binary under `/usr/local/bin` or a similar location and managing the process with systemd, supervisord, or your orchestrator of choice.
+Fluxgate can also be deployed as a standalone binary or using container orchestration platforms like Kubernetes, Docker Compose, and others. See the [Deployment Guide](docs/user/deployment.md) for complete deployment options and examples.
 
 ## 📖 Documentation
 
+- **[Deployment Guide](docs/user/deployment.md)** - Complete deployment options: Docker, binary installation, Kubernetes, and orchestration platforms
 - **[Configuration Guide](docs/user/configuration.md)** - Complete configuration reference, parameters, validation rules, and examples
 - **[Authentication Guide](docs/user/authentication.md)** - Static API keys and JWT token authentication setup and usage
 - **[Logging Guide](docs/user/logging.md)** - Log configuration, levels, structured fields, and observability
