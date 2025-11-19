@@ -40,11 +40,7 @@ docker run -d \
   fluxgate:latest
 ```
 
-The executable expects `fluxgate.yaml` in `/app/fluxgate.yaml`. See the [Deployment Guide](docs/user/deployment.md) for detailed instructions.
-
-### Other Deployment Options
-
-Fluxgate can also be deployed as a standalone binary or using container orchestration platforms like Kubernetes, Docker Compose, and others. See the [Deployment Guide](docs/user/deployment.md) for complete deployment options and examples.
+The executable expects `fluxgate.yaml` in `/app/fluxgate.yaml`. Fluxgate can also be deployed as a standalone binary or using container orchestration platforms like Kubernetes, Docker Compose, and others. See the [Deployment Guide](docs/user/deployment.md) for complete deployment options and examples.
 
 ## 📖 Documentation
 
