@@ -733,7 +733,7 @@ async fn config_file_watcher(
 ) {
     let mut last_mtime = initial_mtime;
     let mut last_content_hash = initial_hash;
-    let poll_interval = Duration::from_millis(500);
+    let poll_interval = Duration::from_secs(1);
     let mut not_found_log_count: u32 = 0;
     let mut permission_denied_log_count: u32 = 0;
 

@@ -214,6 +214,13 @@ make validate-requirements-quality
 # 4. No keys/secrets in examples
 grep -r "sk-" docs/development/requirements/ config/ | grep -v "REPLACE"
 grep -r "api[_-]key" docs/development/requirements/ config/ | grep -v "REPLACE\|placeholder\|example"
+
+# 5. User documentation is updated (if requirements affect user-facing behavior)
+# Check if changes require updates to:
+# - README.md (root) - for high-level changes
+# - docs/user/configuration.md - for configuration changes
+# - docs/user/authentication.md - for authentication changes
+# - docs/user/logging.md - for logging/observability changes
 ```
 
 ---
@@ -477,8 +484,12 @@ make validate-requirements
    ```
 
 4. **Check documentation:**
-   - Update README.md if behavior changes
-   - Update feature docs if requirements change
+   - Update README.md if behavior changes (keep it focused on selling points)
+   - Update user documentation in `docs/user/` if changes affect:
+     - Configuration (`docs/user/configuration.md`)
+     - Authentication (`docs/user/authentication.md`)
+     - Logging (`docs/user/logging.md`)
+   - Update feature docs in `docs/development/features/` if requirements change
    - Verify examples are accurate
 
 ---
@@ -540,7 +551,11 @@ make full-validate
 - [ ] Requirements referenced in tests
 - [ ] Tests updated/added
 - [ ] All functional tests are documented in tables (FT6 requirement)
-- [ ] Documentation updated
+- [ ] User documentation updated (if changes affect user-facing behavior):
+  - [ ] README.md (root) - updated for high-level changes
+  - [ ] docs/user/configuration.md - updated for configuration changes
+  - [ ] docs/user/authentication.md - updated for authentication changes
+  - [ ] docs/user/logging.md - updated for logging/observability changes
 - [ ] No keys/secrets in code or examples
 - [ ] Security requirements checked (if applicable)
 - [ ] Performance requirements checked (if applicable)
