@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update -qq
-          apt-get install -y -qq pkg-config libssl-dev > /dev/null 2>&1
+          apt-get install -y -qq make pkg-config libssl-dev > /dev/null 2>&1
 
       - name: Cache cargo registry
         uses: actions/cache@v4
