@@ -19,12 +19,12 @@ Fluxgate is a high-performance proxy that sits between client applications and l
 
 ## ✨ Features
 
-- ⚡ **Ultra-Low Overhead** - Minimal memory footprint and latency overhead; engineered for microsecond-scale request handling with memory-efficient async Rust. Optimized for high-bandwidth workloads including images, audio, and video—stream large payloads efficiently without buffering bottlenecks
-- 🎛️ **Centralized Access Management** - Secure provider API keys away from clients; one unified key for all providers. Rotate both client and provider keys independently without service disruption
+- 🚀 **Ultra-Low Overhead** - Minimal memory footprint and latency overhead; engineered for microsecond-scale request handling with memory-efficient async Rust. Optimized for high-bandwidth workloads including images, audio, and video—stream large payloads efficiently without buffering bottlenecks
+- 🔐 **Centralized Access Management** - Secure provider API keys away from clients; one unified key for all providers. Rotate both client and provider keys independently without service disruption
 - 📈 **Operationally Scalable** - Stateless workers linearly scale behind standard load-balancers; no sticky sessions required
-- 📡 **Request Fidelity** - Streams request and response bodies end-to-end, forwarding client semantics byte-for-byte—only rewriting the `Authorization` and `Host` headers when forwarding to upstream
-- 📊 **Request Logging** - All requests are automatically logged with structured data for subsequent analysis and monitoring
-- 🔄 **Zero-Downtime Configuration Updates** - Apply configuration changes instantly without service interruption; update the YAML file and changes take effect within 1 second—no restarts, no dropped connections, no deployment overhead
+- 🔄 **Request Fidelity** - Streams request and response bodies end-to-end, forwarding client semantics byte-for-byte—only rewriting the `Authorization` and `Host` headers when forwarding to upstream
+- 📝 **Request Logging** - All requests are automatically logged with structured data for subsequent analysis and monitoring
+- ⚡ **Zero-Downtime Configuration Updates** - Apply configuration changes instantly without service interruption; update the YAML file and changes take effect within 1 second—no restarts, no dropped connections, no deployment overhead
 
 ## 🚀 Quick Start
 
