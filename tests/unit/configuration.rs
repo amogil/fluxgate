@@ -2104,7 +2104,9 @@ server:
   max_connections: 200
 "#;
     // Use tokio::fs for better async file I/O
-    tokio::fs::write(&config_path, updated_config).await.expect("write updated config");
+    tokio::fs::write(&config_path, updated_config)
+        .await
+        .expect("write updated config");
     // Small delay to ensure file system has synced (important in CI/Docker)
     tokio::time::sleep(Duration::from_millis(200)).await;
 
@@ -2117,7 +2119,10 @@ server:
             break;
         }
         if start.elapsed() > timeout {
-            panic!("timeout waiting for update: expected max_connections=200, got {}", receiver.borrow().server.max_connections);
+            panic!(
+                "timeout waiting for update: expected max_connections=200, got {}",
+                receiver.borrow().server.max_connections
+            );
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
@@ -2161,7 +2166,9 @@ server:
   max_connections: 300
 "#;
     // Use tokio::fs for better async file I/O
-    tokio::fs::write(&config_path, updated_config).await.expect("write updated config");
+    tokio::fs::write(&config_path, updated_config)
+        .await
+        .expect("write updated config");
     // Small delay to ensure file system has synced (important in CI/Docker)
     tokio::time::sleep(Duration::from_millis(200)).await;
 
@@ -2176,7 +2183,10 @@ server:
             break;
         }
         if start.elapsed() > timeout {
-            panic!("timeout waiting for updates: receiver1={}, receiver2={}", val1, val2);
+            panic!(
+                "timeout waiting for updates: receiver1={}, receiver2={}",
+                val1, val2
+            );
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
@@ -4546,6 +4556,83 @@ fn deserialize_config_with_empty_server_section() {
     assert_eq!(
         config.server.max_connections, 1024,
         "max_connections should use default"
+    );
+}
+
+#[test]
+fn deserialize_config_without_server_section() {
+    // Precondition: YAML config with version but no server section.
+    // Action: Deserialize config without server section.
+    // Expected behavior: Server section uses defaults (bind_address: "0.0.0.0:8080", max_connections: 1024), validation succeeds.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::Config;
+
+    // Create YAML config without server section
+    let yaml = r#"
+version: 1
+"#;
+
+    let config: Config =
+        serde_yaml::from_str(yaml).expect("should deserialize config without server section");
+
+    assert!(
+        config.validate().is_ok(),
+        "config without server section should be valid"
+    );
+    assert_eq!(
+        config.server.bind_address, "0.0.0.0:8080",
+        "bind_address should use default when server section is omitted"
+    );
+    assert_eq!(
+        config.server.max_connections, 1024,
+        "max_connections should use default when server section is omitted"
+    );
+    assert_eq!(config.upstreams, None, "upstreams should be None");
+    assert_eq!(config.api_keys, None, "api_keys should be None");
+}
+
+#[test]
+fn deserialize_config_without_server_section_with_upstreams() {
+    // Precondition: YAML config with version and upstreams but no server section.
+    // Action: Deserialize config without server section but with upstreams.
+    // Expected behavior: Server section uses defaults, upstreams are loaded correctly, validation succeeds.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::Config;
+
+    // Create YAML config without server section but with upstreams
+    let yaml = r#"
+version: 1
+
+upstreams:
+  openai-1:
+    request_path: "/openai"
+    target_url: "https://api.openai.com"
+    api_key: "sk-test-key"
+"#;
+
+    let config: Config = serde_yaml::from_str(yaml)
+        .expect("should deserialize config without server section but with upstreams");
+
+    assert!(
+        config.validate().is_ok(),
+        "config without server section but with upstreams should be valid"
+    );
+    assert_eq!(
+        config.server.bind_address, "0.0.0.0:8080",
+        "bind_address should use default when server section is omitted"
+    );
+    assert_eq!(
+        config.server.max_connections, 1024,
+        "max_connections should use default when server section is omitted"
+    );
+    assert!(
+        config.upstreams.is_some(),
+        "upstreams should be loaded when present"
+    );
+    let upstreams = config.upstreams.as_ref().unwrap();
+    assert!(
+        upstreams.upstreams.contains_key("openai-1"),
+        "upstream should be present"
     );
 }
 
