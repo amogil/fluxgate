@@ -1,0 +1,55 @@
+name: Full validation
+
+on:
+  pull_request:
+    branches: [ '**' ]
+  push:
+    branches: [ 'master', 'main' ]
+
+jobs:
+  full-validate:
+    name: Full Validation (including functional tests)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.83
+          components: rustfmt, clippy
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq make pkg-config libssl-dev > /dev/null 2>&1
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run full validation
+        run: make full-validate
+
+      - name: Full validation passed
+        if: success()
+        run: echo "✅ Passed"
+
+      - name: Full validation failed
+        if: failure()
+        run: echo "❌ Failed"
+
