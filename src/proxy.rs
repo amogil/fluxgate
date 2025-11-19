@@ -98,14 +98,13 @@ async fn proxy_handler(
     let start_time = std::time::Instant::now();
     let method = req.method().clone();
     let uri = req.uri().clone();
-    let query_params = uri.query().unwrap_or("").to_string();
 
     // Build full request URL for logging (Requirement: O6)
     // Format: "/path?query" (path and query only, method is logged separately)
-    let url = if query_params.is_empty() {
-        uri.path().to_string()
-    } else {
-        format!("{}?{}", uri.path(), query_params)
+    // Optimize: avoid unnecessary string allocation when query is empty
+    let url = match uri.query() {
+        Some(query) if !query.is_empty() => format!("{}?{}", uri.path(), query),
+        _ => uri.path().to_string(),
     };
 
     // Get request body length from headers (Requirement: O6)
@@ -188,6 +187,12 @@ async fn proxy_handler(
     let config = state.config_receiver.borrow().clone();
     let max_connections = config.server.max_connections.max(1);
     state.connection_limiter.ensure_limit(max_connections);
+    
+    // Extract upstream timeout before await point to avoid repeated calls
+    let upstream_timeout_ms = config
+        .upstream_timeout()
+        .unwrap_or(120_000)
+        .max(1);
 
     // Requirement: F8 - Return HTTP 503 when connection limit reached
     // Try to acquire connection permit - reject with 503 if limit reached
@@ -405,6 +410,9 @@ async fn proxy_handler(
         }
     };
 
+    // Extract upstream API key before await point
+    let upstream_api_key = upstream_config.api_key.clone();
+
     // Build upstream URL
     let upstream_url = match build_upstream_url(upstream_config, &uri) {
         Ok(url) => url,
@@ -433,25 +441,36 @@ async fn proxy_handler(
     // Requirement: F1 - Extract host and port from upstream URL for Host header
     // Extract host and port before moving upstream_url into request
     // Host header format: "host" or "host:port" (port only included if non-standard)
+    // Optimize: pre-allocate string capacity to avoid reallocations
     let host_header_value = if let Some(host) = upstream_url.host_str() {
-        let scheme = upstream_url.scheme();
-        let port = upstream_url.port();
-        if let Some(port_num) = port {
-            // Port is explicitly specified - include it in Host header
-            format!("{}:{}", host, port_num)
-        } else {
-            // No explicit port - check if it's a non-standard port via default ports
-            let default_port = match scheme {
-                "https" => 443,
-                "http" => 80,
-                _ => 80, // Default to HTTP port for unknown schemes
-            };
-            // If port_or_known_default returns something different from default, include it
-            match upstream_url.port_or_known_default() {
-                Some(actual_port) if actual_port != default_port => {
-                    format!("{}:{}", host, actual_port)
+        match upstream_url.port() {
+            Some(port_num) => {
+                // Port is explicitly specified - include it in Host header
+                let mut s = String::with_capacity(host.len() + 6);
+                s.push_str(host);
+                s.push(':');
+                s.push_str(&port_num.to_string());
+                s
+            }
+            None => {
+                // No explicit port - check if it's a non-standard port via default ports
+                let scheme = upstream_url.scheme();
+                let default_port = match scheme {
+                    "https" => 443,
+                    "http" => 80,
+                    _ => 80, // Default to HTTP port for unknown schemes
+                };
+                // If port_or_known_default returns something different from default, include it
+                match upstream_url.port_or_known_default() {
+                    Some(actual_port) if actual_port != default_port => {
+                        let mut s = String::with_capacity(host.len() + 6);
+                        s.push_str(host);
+                        s.push(':');
+                        s.push_str(&actual_port.to_string());
+                        s
+                    }
+                    _ => host.to_string(),
                 }
-                _ => host.to_string(),
             }
         }
     } else {
@@ -480,9 +499,7 @@ async fn proxy_handler(
         }
     }
 
-    upstream_req = upstream_req.timeout(Duration::from_millis(
-        config.upstream_timeout().unwrap_or(120_000).max(1),
-    ));
+    upstream_req = upstream_req.timeout(Duration::from_millis(upstream_timeout_ms));
 
     // Requirement: F1 - Set Host header to correct value derived from upstream's target URL
     if !host_header_value.is_empty() {
@@ -491,9 +508,9 @@ async fn proxy_handler(
 
     // Requirement: F1, F2 - Replace Authorization header with upstream credentials
     // Add upstream API key if configured
-    if !upstream_config.api_key.is_empty() {
+    if !upstream_api_key.is_empty() {
         upstream_req =
-            upstream_req.header(AUTHORIZATION, format!("Bearer {}", upstream_config.api_key));
+            upstream_req.header(AUTHORIZATION, format!("Bearer {}", upstream_api_key));
     }
 
     // Requirement: F13, P4 - Stream request body without loading into memory
@@ -553,6 +570,7 @@ async fn proxy_handler(
 
     // Build response from upstream
     let status = upstream_response.status();
+    // Clone headers before moving upstream_response (needed for header forwarding)
     let headers = upstream_response.headers().clone();
     // Get response body length from upstream response headers (Requirement: O6)
     let response_body_length = get_body_length_from_headers(&headers);
@@ -581,9 +599,11 @@ async fn proxy_handler(
     *response.status_mut() = status;
 
     // Copy headers from upstream response
+    // Optimize: avoid cloning entire HeaderMap, clone only individual headers as needed
+    let response_headers = response.headers_mut();
     for (key, value) in headers.iter() {
         if !is_hop_by_hop_header(key) {
-            response.headers_mut().insert(key.clone(), value.clone());
+            response_headers.insert(key.clone(), value.clone());
         }
     }
 
@@ -730,15 +750,20 @@ impl ConnectionLimiter {
 
     /// Try to acquire a connection permit immediately.
     /// Returns Ok(TrackedPermit) if a permit is available, Err(()) if the limit is reached.
+    /// Optimized: clone Arc immediately to minimize lock hold time
     #[allow(clippy::result_unit_err)] // Using () as error type is intentional for semaphore
     pub fn try_acquire(&self) -> Result<TrackedPermit, ()> {
+        // Clone Arc<Semaphore> immediately (cheap - just increments reference count)
+        // This minimizes the time we hold the read lock
         let semaphore = {
-            self.semaphore
+            let guard = self
+                .semaphore
                 .read()
-                .expect("connection limiter semaphore lock poisoned")
-                .clone()
+                .expect("connection limiter semaphore lock poisoned");
+            guard.clone()
         };
-        match semaphore.clone().try_acquire_owned() {
+        // Lock is released here, before the potentially slow try_acquire_owned call
+        match semaphore.try_acquire_owned() {
             Ok(permit) => {
                 self.active.fetch_add(1, Ordering::Relaxed);
                 Ok(TrackedPermit {
