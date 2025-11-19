@@ -152,7 +152,7 @@ To use Fluxgate proxy with OpenAI and Anthropic client libraries, configure the 
 from openai import OpenAI
 
 client = OpenAI(
-    api_key="2qqwZ2MrffFMBguNMGVr",  # Your client API key from fluxgate.yaml
+    api_key="<CLIENT_KEY>",  # Your client API key from fluxgate.yaml
     base_url="http://localhost:8080/openai"
 )
 
@@ -164,7 +164,7 @@ response = client.models.list()
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: '2qqwZ2MrffFMBguNMGVr',  // Your client API key from fluxgate.yaml
+  apiKey: '<CLIENT_KEY>',  // Your client API key from fluxgate.yaml
   baseURL: 'http://localhost:8080/openai',
 });
 
@@ -178,7 +178,7 @@ const models = await openai.models.list();
 from anthropic import Anthropic
 
 client = Anthropic(
-    api_key="2qqwZ2MrffFMBguNMGVr",  # Your client API key from fluxgate.yaml
+    api_key="<CLIENT_KEY>",  # Your client API key from fluxgate.yaml
     base_url="http://localhost:8080/anthropic"
 )
 
@@ -194,7 +194,7 @@ message = client.messages.create(
 import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
-  apiKey: '2qqwZ2MrffFMBguNMGVr',  // Your client API key from fluxgate.yaml
+  apiKey: '<CLIENT_KEY>',  // Your client API key from fluxgate.yaml
   baseURL: 'http://localhost:8080/anthropic',
 });
 

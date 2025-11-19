@@ -7,23 +7,19 @@ Fluxgate is configured using a YAML file. By default, the proxy looks for `fluxg
 ```yaml
 version: 1
 
-server:
-  bind_address: "0.0.0.0:8080"
-  max_connections: 1024
-
 upstreams:
   request_timeout_ms: 120000
-  openai-1:
+  openai:
     request_path: "/openai"
     target_url: "https://api.openai.com"
-    api_key: "sk-openai-key"
+    api_key: "<OPENAI_KEY>"
 
 api_keys:
   static:
     - id: pr
-      key: 2qqwZ2MrffFMBguNMGVr
+      key: "<CLIENT_KEY>"
       upstreams:
-        - openai-1
+        - openai
 ```
 
 A complete reference configuration is available at [`config/fluxgate.yaml`](../../config/fluxgate.yaml).
