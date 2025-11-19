@@ -41,25 +41,6 @@ Fluxgate is ideal when you need to:
 - ⚡ **Update configuration without downtime** - Apply configuration changes instantly without service interruption.
   Update the YAML file and changes take effect within 1 second—no restarts, no dropped connections, no deployment
   overhead. Perfect for dynamic environments where you need to add new providers, update routing rules, or adjust
-  authentication settings on the fly.- 🔐 **Secure provider API keys away from clients** - Keep sensitive provider API
-  keys (OpenAI, Anthropic, etc.) on the
-  server side, never exposing them to client applications. Use one unified client API key for all providers, simplifying
-  key management across your infrastructure. Rotate both client and provider keys independently without service
-  disruption—update provider keys when they expire or are compromised, and rotate client keys for security compliance,
-  all without downtime or application redeployment.
-
-- 🚀 **Handle high-bandwidth workloads efficiently** - Process large payloads including images, audio, and video files
-  without memory bottlenecks. Fluxgate streams data efficiently, avoiding buffering that can cause memory spikes or
-  timeouts. Built with async Rust for microsecond-scale request handling, it maintains minimal memory footprint and
-  latency overhead even under heavy load.
-
-- 📊 **Monitor and analyze API usage** - Automatically log all requests with structured data for analysis, debugging, and
-  monitoring. Track usage patterns, identify bottlenecks, audit access, and generate reports without instrumenting
-  client applications.
-
-- ⚡ **Update configuration without downtime** - Apply configuration changes instantly without service interruption.
-  Update the YAML file and changes take effect within 1 second—no restarts, no dropped connections, no deployment
-  overhead. Perfect for dynamic environments where you need to add new providers, update routing rules, or adjust
   authentication settings on the fly.
 
 ## ✨ Features
