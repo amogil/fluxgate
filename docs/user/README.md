@@ -14,3 +14,11 @@ This directory contains user-facing documentation for Fluxgate. For development 
 - **Configuration Example:** See `config/fluxgate.yaml` for a complete configuration example
 - **Development Documentation:** See `docs/development/` for requirements, features, and development guides
 
+## Deployment Options
+
+Fluxgate can be deployed in several ways:
+
+- **Binary Installation** - Download and run the static executable directly
+- **Docker** - Use the production-ready Docker image (see [root README](../../README.md) for Docker instructions)
+- **Container Orchestration** - Deploy the Docker image using Kubernetes, Docker Compose, or similar platforms
+

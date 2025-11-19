@@ -363,7 +363,7 @@ fn check_completeness(requirements: &HashMap<String, Requirement>) -> bool {
         ("UT", 1, 4),
         ("FT", 1, 7),
         ("CLI", 1, 4),
-        ("OP", 1, 2),
+        ("OP", 1, 3),
         ("O", 1, 9),
     ];
 

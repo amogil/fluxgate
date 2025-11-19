@@ -12,3 +12,10 @@ reject the request and log a security warning at WARNING level.
 
 **Tags:** `security`, `error-handling`, `http-400`, `logging`
 
+OP3. The project must provide a production-ready Docker image that is maximally thin and minimal. The Docker image must
+use multi-stage builds to minimize final image size, include only the compiled binary and essential runtime dependencies,
+and use a minimal base image (such as distroless) for security and size optimization. The production Docker image must not
+include build tools, development dependencies, or source code.
+
+**Tags:** `deployment`, `platform`, `build-system`, `security`
+

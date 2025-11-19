@@ -48,6 +48,32 @@ This starts the proxy using `fluxgate.yaml` in the current working directory and
 ./fluxgate --config /etc/fluxgate/fluxgate.yaml
 ```
 
+### Docker
+
+Fluxgate provides a production-ready Docker image. The configuration file must be mounted when running the container.
+
+**Build the image:**
+
+```bash
+docker build -t fluxgate:latest .
+```
+
+**Run with configuration file (mount your config):**
+
+```bash
+docker run -d \
+  -p 8080:8080 \
+  -v /path/to/your/fluxgate.yaml:/app/fluxgate.yaml \
+  fluxgate:latest
+```
+
+The executable is located at `/app/fluxgate` and expects `fluxgate.yaml` in the same directory (`/app/fluxgate.yaml`). The proxy automatically uses `fluxgate.yaml` from the current working directory.
+
+The Docker image is optimized for production use:
+- **Minimal size** - Multi-stage build with distroless base image
+- **Secure** - Runs as non-root user with minimal attack surface
+- **No build tools** - Only includes the compiled binary and essential runtime dependencies
+
 ### Process Management
 
 Prefer installing the binary under `/usr/local/bin` or a similar location and managing the process with systemd, supervisord, or your orchestrator of choice.

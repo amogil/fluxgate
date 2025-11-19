@@ -64,6 +64,7 @@ fn main() {
         "UT1", "UT2", "UT3", "UT4", // Unit test requirements (covered by test structure)
         "FT1", "FT2", "FT3", "FT4", "FT5", "FT6",
         "FT7", // Functional test requirements (covered by test structure)
+        "OP3", // Docker image requirement (covered by Dockerfile)
     ]
     .iter()
     .cloned()
