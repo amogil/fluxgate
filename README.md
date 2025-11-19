@@ -32,7 +32,7 @@ Fluxgate is ideal when you need to:
 ## ✨ Features
 
 - **Ultra-Low Overhead** - Handles thousands of concurrent connections on modest hardware with typically less than 1ms added latency per request.
-- **Centralized Access Management** - Rotate both client and provider keys independently without service disruption. Support for JWT tokens allows issuing client tokens with expiration times to ensure automatic rotation. Client token rotation can be automated by external systems without changing proxy configuration.
+- **Centralized Access Management** - Rotate both client and provider keys independently without service disruption. Support for JWT tokens allows issuing client tokens with expiration times to ensure rotation. Client token rotation can be automated by external systems without changing proxy configuration.
 - **Operationally Scalable** - Stateless workers linearly scale behind standard load-balancers; no sticky sessions required.
 - **Request Fidelity** - Streams request and response bodies end-to-end, forwarding client semantics byte-for-byte—only rewriting the `Authorization` and `Host` headers when forwarding to upstream.
 - **Request Logging** - Captures timestamps, client identifiers, provider endpoints, request/response sizes, status codes, and latency metrics. Outputs structured logs with key-value pairs for easy parsing and integration with log aggregation systems.
@@ -40,7 +40,7 @@ Fluxgate is ideal when you need to:
 
 ## 🚀 Quick Start
 
-1. **Create configuration file `fluxgate.yaml` with two providers (OpenAI and Anthropic):**
+1. **Create configuration file `fluxgate.yaml` with OpenAI provider:**
 
 ```yaml
 version: 1
@@ -54,7 +54,7 @@ upstreams:
 api_keys:
   static:
     - id: my-key
-      key: "2qqwZ2MrffFMBguNMGVr"
+      key: "<CLIENT_KEY>"
 ```
 
 - Specify your OpenAI API key in the `upstreams` section.
@@ -70,7 +70,7 @@ docker run -d -p 8080:8080 -v $(pwd)/fluxgate.yaml:/app/fluxgate.yaml fluxgate:l
 3. **Test it:**
 
 ```bash
-curl -H "Authorization: Bearer 2qqwZ2MrffFMBguNMGVr" http://localhost:8080/openai/v1/models
+curl -H "Authorization: Bearer <CLIENT_KEY>" http://localhost:8080/openai/v1/models
 ```
 
 **Use with OpenAI SDK:**
@@ -79,7 +79,7 @@ curl -H "Authorization: Bearer 2qqwZ2MrffFMBguNMGVr" http://localhost:8080/opena
 from openai import OpenAI
 
 client = OpenAI(
-    api_key="2qqwZ2MrffFMBguNMGVr",  # Your client API key from fluxgate.yaml
+    api_key="<CLIENT_KEY>",  # Your client API key from fluxgate.yaml
     base_url="http://localhost:8080/openai"
 )
 
