@@ -6,6 +6,10 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.0+-orange.svg)](https://www.rust-lang.org/)
+[![GitHub stars](https://img.shields.io/github/stars/amogil/fluxgate?style=flat-square&logo=github)](https://github.com/amogil/fluxgate/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/amogil/fluxgate?style=flat-square&logo=github)](https://github.com/amogil/fluxgate/network/members)
+[![Status](https://img.shields.io/badge/status-active-success?style=flat-square)](https://github.com/amogil/fluxgate)
+[![Platform](https://img.shields.io/badge/platform-Linux-lightgrey?style=flat-square&logo=linux)](https://github.com/amogil/fluxgate)
 
 </div>
 
