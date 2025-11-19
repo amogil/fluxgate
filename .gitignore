@@ -1,0 +1,12 @@
+/target
+
+.idea/
+.vscode/
+.DS_Store
+
+# Explicitly ignore build artifacts
+target/
+
+# Local stuff
+.cursorrules
+config/fluxgate-test.yaml

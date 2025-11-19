@@ -1,0 +1,31 @@
+# Rust build artifacts
+target/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CI/CD
+.github/
+
+# Documentation
+README.md
+
+# Development scripts
+run-tests-docker.sh
+
+# Test results
+test-results/
+*.log
+
+# Local stuff
+.cursorrules
+config/fluxgate-test.yaml

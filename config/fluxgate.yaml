@@ -1,0 +1,41 @@
+# Fluxgate reference configuration.
+# This file documents the server, upstreams, and api_keys sections with sample values.
+# Update the values to match your deployment requirements.
+
+version: 1
+
+server:
+  bind_address: "0.0.0.0:8080"
+  max_connections: 1024
+
+upstreams:
+  request_timeout_ms: 120000
+  openai-1:
+    request_path: "/openai"
+    target_url: "https://api.openai.com"
+    api_key: "REPLACE_WITH_API_KEY"
+  anthropic-1:
+    request_path: "/anthropic"
+    target_url: "https://api.anthropic.com"
+    api_key: "REPLACE_WITH_API_KEY"
+  anthropic-2:
+    request_path: "/anthropic-v2"
+    target_url: "https://api.anthropic.com"
+    api_key: "REPLACE_WITH_API_KEY"
+
+api_keys:
+  static:
+    - id: pr
+      key: "REPLACE_WITH_API_KEY1"
+      upstreams:
+        - openai-1
+        - anthropic-1
+    - id: marketing
+      key: "REPLACE_WITH_API_KEY2"
+      upstreams:
+        - anthropic-2
+  jwt:
+    - id: dev
+      key: "REPLACE_WITH_API_KEY3"
+    - id: test
+      key: "REPLACE_WITH_API_KEY4"
