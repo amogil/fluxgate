@@ -34,6 +34,31 @@ pub const DEFAULT_CONFIG_PATH: &str = "fluxgate.yaml";
 /// Supported configuration schema version.
 pub const SUPPORTED_CONFIG_VERSION: u8 = 1;
 
+/// Default value for upstream request timeout in milliseconds.
+/// Requirement: C8 - Default value for optional upstreams.request_timeout_ms
+const DEFAULT_REQUEST_TIMEOUT_MS: u64 = 120_000;
+
+/// Default value for server bind address.
+/// Requirement: C8 - Default value for optional server.bind_address
+const DEFAULT_BIND_ADDRESS: &str = "0.0.0.0:8080";
+
+/// Default value for server max connections.
+/// Requirement: C8 - Default value for optional server.max_connections
+const DEFAULT_MAX_CONNECTIONS: u32 = 1_024;
+
+// Serde requires functions for default values, not constants
+fn default_request_timeout_ms() -> u64 {
+    DEFAULT_REQUEST_TIMEOUT_MS
+}
+
+fn default_bind_address() -> String {
+    DEFAULT_BIND_ADDRESS.to_string()
+}
+
+fn default_max_connections() -> u32 {
+    DEFAULT_MAX_CONNECTIONS
+}
+
 /// Proxy configuration shared across the application.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Config {
@@ -48,8 +73,8 @@ impl Default for Config {
         Self {
             version: SUPPORTED_CONFIG_VERSION,
             server: ServerConfig {
-                bind_address: "0.0.0.0:8080".to_string(),
-                max_connections: 1_024,
+                bind_address: default_bind_address(),
+                max_connections: default_max_connections(),
             },
             upstreams: None,
             api_keys: None,
@@ -464,7 +489,11 @@ impl Config {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ServerConfig {
+    /// Requirement: C8 - Optional field with default value 0.0.0.0:8080
+    #[serde(default = "default_bind_address")]
     pub bind_address: String,
+    /// Requirement: C8 - Optional field with default value 1024
+    #[serde(default = "default_max_connections")]
     pub max_connections: u32,
 }
 
@@ -477,6 +506,8 @@ pub struct UpstreamConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct UpstreamsConfig {
+    /// Requirement: C8 - Optional field with default value 120000
+    #[serde(default = "default_request_timeout_ms")]
     pub request_timeout_ms: u64,
     #[serde(flatten)]
     pub upstreams: HashMap<String, UpstreamEntry>,
@@ -808,7 +839,6 @@ async fn config_file_watcher(
                             static ERROR_COUNT: AtomicU32 = AtomicU32::new(0);
                             let count = ERROR_COUNT.fetch_add(1, Ordering::Relaxed);
                             // Use manual modulo check for compatibility with older Rust versions in Docker
-                            #[allow(clippy::manual_is_multiple_of)]
                             if count % 20 == 0 {
                                 warn!(
                                     path = %inner.path.display(),

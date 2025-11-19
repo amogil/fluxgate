@@ -1108,3 +1108,148 @@ fn proxy_logs_misleading_message_when_config_file_deleted_after_being_added() {
         }
     });
 }
+
+#[test]
+fn proxy_loads_config_with_omitted_optional_server_fields() {
+    // Preconditions: Configuration file with server section but bind_address and max_connections omitted.
+    // Action: Start proxy with configuration file missing optional server fields.
+    // Expected behavior: Proxy starts successfully using default values (0.0.0.0:8080 for bind_address, 1024 for max_connections).
+    // Covers Requirements: C1, C4, C8
+
+    let rt = Runtime::new().expect("create tokio runtime");
+
+    rt.block_on(async {
+        let mock_server = MockServer::start().await.expect("start mock server");
+
+        let port = allocate_port();
+        let _bind_addr: SocketAddr = format!("127.0.0.1:{port}")
+            .parse()
+            .expect("parse bind address");
+
+        // Config with omitted bind_address and max_connections - should use defaults
+        let config_yaml = format!(
+            r#"
+version: 1
+
+server:
+  # bind_address omitted - should use default 0.0.0.0:8080
+  # max_connections omitted - should use default 1024
+
+upstreams:
+  test-upstream:
+    request_path: "/test"
+    target_url: "{}"
+    api_key: "upstream-key"
+
+api_keys:
+  static:
+    - id: test-key
+      key: "valid-token"
+      upstreams:
+        - test-upstream
+"#,
+            mock_server.url()
+        );
+
+        let mut proxy = ProxyProcess::spawn(&config_yaml);
+
+        // Wait for proxy to start
+        let logs = proxy.wait_for_logs(Duration::from_secs(5), |logs| {
+            logs.contains("Fluxgate proxy server listening")
+                || logs.contains("Loaded configuration")
+        });
+
+        assert!(
+            logs.contains("Loaded configuration")
+                || logs.contains("Fluxgate proxy server listening"),
+            "Proxy should start successfully with omitted server fields, got: {}",
+            logs
+        );
+
+        proxy.shutdown();
+    });
+}
+
+#[test]
+fn proxy_loads_config_with_omitted_request_timeout_ms() {
+    // Preconditions: Configuration file with upstreams section but request_timeout_ms omitted.
+    // Action: Start proxy and make request to upstream.
+    // Expected behavior: Proxy uses default timeout (120000ms) for upstream requests and successfully proxies requests.
+    // Covers Requirements: C1, C4, C8, F9
+
+    let rt = Runtime::new().expect("create tokio runtime");
+
+    rt.block_on(async {
+        let mock_server = MockServer::start_with(
+            axum::http::StatusCode::OK,
+            r#"{"status": "ok"}"#.as_bytes().to_vec(),
+        )
+        .await
+        .expect("start mock server");
+
+        let port = allocate_port();
+        let bind_addr: SocketAddr = format!("127.0.0.1:{port}")
+            .parse()
+            .expect("parse bind address");
+
+        // Config with omitted request_timeout_ms - should use default 120000
+        let config_yaml = format!(
+            r#"
+version: 1
+
+server:
+  bind_address: "{}"
+  max_connections: 100
+
+upstreams:
+  # request_timeout_ms omitted - should use default 120000
+  test-upstream:
+    request_path: "/test"
+    target_url: "{}"
+    api_key: "upstream-key"
+
+api_keys:
+  static:
+    - id: test-key
+      key: "valid-token"
+      upstreams:
+        - test-upstream
+"#,
+            bind_addr,
+            mock_server.url()
+        );
+
+        let mut proxy = ProxyProcess::spawn(&config_yaml);
+
+        // Wait for proxy to start
+        let _logs = proxy.wait_for_logs(Duration::from_secs(5), |logs| {
+            logs.contains("Fluxgate proxy server listening")
+                || logs.contains("Loaded configuration")
+        });
+
+        // Make a request to verify proxy works with default timeout
+        let client = reqwest::Client::new();
+        let response = client
+            .get(format!("http://{}/test/endpoint", bind_addr))
+            .header("Authorization", "Bearer valid-token")
+            .send()
+            .await
+            .expect("send request");
+
+        assert_eq!(
+            response.status(),
+            200,
+            "Proxy should successfully handle request with default timeout"
+        );
+
+        // Verify the request reached upstream (default timeout should be sufficient)
+        let body = response.text().await.expect("read response body");
+        assert!(
+            body.contains("ok"),
+            "Response should contain expected content, got: {}",
+            body
+        );
+
+        proxy.shutdown();
+    });
+}

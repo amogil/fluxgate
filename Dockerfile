@@ -6,6 +6,7 @@ FROM rust:1.83-slim AS builder
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
     pkg-config \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -16,6 +17,9 @@ COPY Cargo.toml Cargo.lock ./
 
 # Copy source code
 COPY src/ src/
+
+# Copy scripts (needed for binary definitions in Cargo.toml)
+COPY scripts/ scripts/
 
 # Build release binary
 RUN cargo build --release

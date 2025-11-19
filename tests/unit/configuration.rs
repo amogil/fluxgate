@@ -3878,6 +3878,40 @@ fn validate_accepts_request_timeout_ms_one() {
 }
 
 #[test]
+fn validate_accepts_omitted_request_timeout_ms() {
+    // Precondition: Configuration with upstreams section but request_timeout_ms omitted.
+    // Action: Deserialize YAML config without request_timeout_ms and validate.
+    // Expected behavior: Validation succeeds, request_timeout_ms uses default value 120000.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::Config;
+
+    // YAML without request_timeout_ms - should use default
+    let yaml = r#"
+version: 1
+server:
+  bind_address: "127.0.0.1:8080"
+  max_connections: 100
+upstreams:
+  test-upstream:
+    request_path: "/test"
+    target_url: "https://api.example.com"
+    api_key: "test-key"
+"#;
+    let config: Config =
+        serde_yaml::from_str(yaml).expect("should deserialize config without request_timeout_ms");
+
+    assert!(
+        config.validate().is_ok(),
+        "config without request_timeout_ms should be valid"
+    );
+    assert_eq!(
+        config.upstream_timeout(),
+        Some(120_000),
+        "omitted request_timeout_ms should use default value 120000"
+    );
+}
+
+#[test]
 fn validate_accepts_request_timeout_ms_large_value() {
     // Precondition: Configuration with upstreams.request_timeout_ms set to large value.
     // Action: Call validate on configuration with large timeout.
@@ -4037,6 +4071,548 @@ server:
     assert!(
         !config.server.bind_address.is_empty(),
         "should have bind_address set"
+    );
+}
+
+#[test]
+fn validate_accepts_omitted_server_bind_address() {
+    // Precondition: Configuration with server section but bind_address omitted.
+    // Action: Deserialize YAML config without bind_address and validate.
+    // Expected behavior: Validation succeeds, bind_address uses default value 0.0.0.0:8080.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::Config;
+
+    // YAML without bind_address - should use default
+    let yaml = r#"
+version: 1
+server:
+  max_connections: 100
+"#;
+    let config: Config =
+        serde_yaml::from_str(yaml).expect("should deserialize config without bind_address");
+
+    assert!(
+        config.validate().is_ok(),
+        "config without bind_address should be valid"
+    );
+    assert_eq!(
+        config.server.bind_address, "0.0.0.0:8080",
+        "omitted bind_address should use default value"
+    );
+}
+
+#[test]
+fn validate_accepts_omitted_server_max_connections() {
+    // Precondition: Configuration with server section but max_connections omitted.
+    // Action: Deserialize YAML config without max_connections and validate.
+    // Expected behavior: Validation succeeds, max_connections uses default value 1024.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::Config;
+
+    // YAML without max_connections - should use default
+    let yaml = r#"
+version: 1
+server:
+  bind_address: "127.0.0.1:8080"
+"#;
+    let config: Config =
+        serde_yaml::from_str(yaml).expect("should deserialize config without max_connections");
+
+    assert!(
+        config.validate().is_ok(),
+        "config without max_connections should be valid"
+    );
+    assert_eq!(
+        config.server.max_connections, 1024,
+        "omitted max_connections should use default value"
+    );
+}
+
+#[test]
+fn deserialize_config_with_all_optional_fields_omitted() {
+    // Precondition: YAML config with server section but all optional fields omitted.
+    // Action: Deserialize YAML config without bind_address, max_connections, and request_timeout_ms.
+    // Expected behavior: All fields use default values, validation succeeds.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::Config;
+    use serde_yaml::Value;
+
+    // Create config using helper functions
+    let upstream = test_upstream_entry_with_path("https://api.example.com", "test-key", "/test");
+    let base_config = test_config(
+        Some(test_upstreams_config(
+            30_000,
+            vec![("test-upstream", upstream)],
+        )),
+        None,
+    );
+
+    // Serialize to YAML Value and remove optional fields
+    let mut yaml_value: Value =
+        serde_yaml::to_value(&base_config).expect("should serialize config to YAML value");
+
+    // Remove optional fields from server section
+    if let Some(server_value) = yaml_value.get_mut("server") {
+        if let Value::Mapping(ref mut map) = server_value {
+            map.remove(&Value::String("bind_address".to_string()));
+            map.remove(&Value::String("max_connections".to_string()));
+        }
+    }
+
+    // Remove request_timeout_ms from upstreams section
+    if let Some(upstreams_value) = yaml_value.get_mut("upstreams") {
+        if let Value::Mapping(ref mut map) = upstreams_value {
+            map.remove(&Value::String("request_timeout_ms".to_string()));
+        }
+    }
+
+    // Serialize back to string and deserialize
+    let yaml = serde_yaml::to_string(&yaml_value).expect("should serialize YAML value");
+    let config: Config = serde_yaml::from_str(&yaml)
+        .expect("should deserialize config with all optional fields omitted");
+
+    assert!(config.validate().is_ok(), "config should be valid");
+    assert_eq!(
+        config.server.bind_address, "0.0.0.0:8080",
+        "bind_address should use default"
+    );
+    assert_eq!(
+        config.server.max_connections, 1024,
+        "max_connections should use default"
+    );
+    assert_eq!(
+        config.upstream_timeout(),
+        Some(120_000),
+        "request_timeout_ms should use default"
+    );
+}
+
+#[test]
+fn deserialize_config_with_partial_server_fields() {
+    // Precondition: YAML config with server section having only bind_address.
+    // Action: Deserialize YAML config with only bind_address specified.
+    // Expected behavior: max_connections uses default, validation succeeds.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::{Config, ServerConfig};
+    use serde_yaml::Value;
+
+    // Create config using helper functions with custom bind_address
+    let base_config = Config {
+        version: SUPPORTED_CONFIG_VERSION,
+        server: ServerConfig {
+            bind_address: "192.168.1.1:9000".to_string(),
+            max_connections: test_server_config().max_connections,
+        },
+        upstreams: None,
+        api_keys: None,
+    };
+
+    // Serialize to YAML Value and remove max_connections
+    let mut yaml_value: Value =
+        serde_yaml::to_value(&base_config).expect("should serialize config to YAML value");
+
+    if let Some(server_value) = yaml_value.get_mut("server") {
+        if let Value::Mapping(ref mut map) = server_value {
+            map.remove(&Value::String("max_connections".to_string()));
+        }
+    }
+
+    // Serialize back to string and deserialize
+    let yaml = serde_yaml::to_string(&yaml_value).expect("should serialize YAML value");
+    let config: Config =
+        serde_yaml::from_str(&yaml).expect("should deserialize config with partial server fields");
+
+    assert!(config.validate().is_ok(), "config should be valid");
+    assert_eq!(
+        config.server.bind_address, "192.168.1.1:9000",
+        "bind_address should be set"
+    );
+    assert_eq!(
+        config.server.max_connections, 1024,
+        "max_connections should use default"
+    );
+}
+
+#[test]
+fn deserialize_config_with_partial_server_fields_max_connections_only() {
+    // Precondition: YAML config with server section having only max_connections.
+    // Action: Deserialize YAML config with only max_connections specified.
+    // Expected behavior: bind_address uses default, validation succeeds.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::{Config, ServerConfig};
+    use serde_yaml::Value;
+
+    // Create config using helper functions with custom max_connections
+    let base_config = Config {
+        version: SUPPORTED_CONFIG_VERSION,
+        server: ServerConfig {
+            bind_address: test_server_config().bind_address,
+            max_connections: 2048,
+        },
+        upstreams: None,
+        api_keys: None,
+    };
+
+    // Serialize to YAML Value and remove bind_address
+    let mut yaml_value: Value =
+        serde_yaml::to_value(&base_config).expect("should serialize config to YAML value");
+
+    if let Some(server_value) = yaml_value.get_mut("server") {
+        if let Value::Mapping(ref mut map) = server_value {
+            map.remove(&Value::String("bind_address".to_string()));
+        }
+    }
+
+    // Serialize back to string and deserialize
+    let yaml = serde_yaml::to_string(&yaml_value).expect("should serialize YAML value");
+    let config: Config =
+        serde_yaml::from_str(&yaml).expect("should deserialize config with only max_connections");
+
+    assert!(config.validate().is_ok(), "config should be valid");
+    assert_eq!(
+        config.server.bind_address, "0.0.0.0:8080",
+        "bind_address should use default"
+    );
+    assert_eq!(
+        config.server.max_connections, 2048,
+        "max_connections should be set"
+    );
+}
+
+#[test]
+fn deserialize_config_with_upstreams_but_no_timeout() {
+    // Precondition: YAML config with upstreams section but no request_timeout_ms.
+    // Action: Deserialize YAML config with upstreams but omitted timeout.
+    // Expected behavior: request_timeout_ms uses default, validation succeeds.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::Config;
+    use serde_yaml::Value;
+
+    // Create config using helper functions
+    let upstream1 = test_upstream_entry_with_path("https://api1.example.com", "key1", "/api1");
+    let upstream2 = test_upstream_entry_with_path("https://api2.example.com", "key2", "/api2");
+    let base_config = test_config(
+        Some(test_upstreams_config(
+            30_000,
+            vec![("upstream1", upstream1), ("upstream2", upstream2)],
+        )),
+        None,
+    );
+
+    // Serialize to YAML Value and remove request_timeout_ms
+    let mut yaml_value: Value =
+        serde_yaml::to_value(&base_config).expect("should serialize config to YAML value");
+
+    if let Some(upstreams_value) = yaml_value.get_mut("upstreams") {
+        if let Value::Mapping(ref mut map) = upstreams_value {
+            map.remove(&Value::String("request_timeout_ms".to_string()));
+        }
+    }
+
+    // Serialize back to string and deserialize
+    let yaml = serde_yaml::to_string(&yaml_value).expect("should serialize YAML value");
+    let config: Config = serde_yaml::from_str(&yaml)
+        .expect("should deserialize config with upstreams but no timeout");
+
+    assert!(config.validate().is_ok(), "config should be valid");
+    assert_eq!(
+        config.upstream_timeout(),
+        Some(120_000),
+        "timeout should use default"
+    );
+    assert_eq!(
+        config.get_upstream("upstream1").is_some(),
+        true,
+        "upstream1 should exist"
+    );
+    assert_eq!(
+        config.get_upstream("upstream2").is_some(),
+        true,
+        "upstream2 should exist"
+    );
+}
+
+#[test]
+fn validate_rejects_explicit_zero_timeout_but_accepts_omitted() {
+    // Precondition: Two configs - one with explicit zero timeout, one with omitted timeout.
+    // Action: Validate both configs.
+    // Expected behavior: Explicit zero is rejected, omitted uses default and is accepted.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::Config;
+    use serde_yaml::Value;
+
+    // Config with explicit zero - should be rejected
+    let upstream = test_upstream_entry_with_path("https://api.example.com", "test-key", "/test");
+    let base_config_zero = test_config(
+        Some(test_upstreams_config(0, vec![("test-upstream", upstream)])),
+        None,
+    );
+    let yaml_zero = serde_yaml::to_string(&base_config_zero)
+        .expect("should serialize config with zero timeout");
+    let config_zero: Config =
+        serde_yaml::from_str(&yaml_zero).expect("should deserialize even with invalid value");
+    assert!(
+        config_zero.validate().is_err(),
+        "explicit zero timeout should be rejected"
+    );
+
+    // Config with omitted timeout - should be accepted with default
+    let upstream_omitted =
+        test_upstream_entry_with_path("https://api.example.com", "test-key", "/test");
+    let base_config_omitted = test_config(
+        Some(test_upstreams_config(
+            30_000,
+            vec![("test-upstream", upstream_omitted)],
+        )),
+        None,
+    );
+    let mut yaml_value: Value =
+        serde_yaml::to_value(&base_config_omitted).expect("should serialize config to YAML value");
+    if let Some(upstreams_value) = yaml_value.get_mut("upstreams") {
+        if let Value::Mapping(ref mut map) = upstreams_value {
+            map.remove(&Value::String("request_timeout_ms".to_string()));
+        }
+    }
+    let yaml_omitted =
+        serde_yaml::to_string(&yaml_value).expect("should serialize YAML value without timeout");
+    let config_omitted: Config =
+        serde_yaml::from_str(&yaml_omitted).expect("should deserialize config without timeout");
+    assert!(
+        config_omitted.validate().is_ok(),
+        "omitted timeout should be accepted"
+    );
+    assert_eq!(
+        config_omitted.upstream_timeout(),
+        Some(120_000),
+        "should use default"
+    );
+}
+
+#[test]
+fn validate_rejects_explicit_zero_max_connections_but_accepts_omitted() {
+    // Precondition: Two configs - one with explicit zero max_connections, one with omitted.
+    // Action: Validate both configs.
+    // Expected behavior: Explicit zero is rejected, omitted uses default and is accepted.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::{Config, ServerConfig};
+    use serde_yaml::Value;
+
+    // Config with explicit zero - should be rejected
+    let base_config_zero = Config {
+        version: SUPPORTED_CONFIG_VERSION,
+        server: ServerConfig {
+            bind_address: test_server_config().bind_address,
+            max_connections: 0,
+        },
+        upstreams: None,
+        api_keys: None,
+    };
+    let yaml_zero = serde_yaml::to_string(&base_config_zero)
+        .expect("should serialize config with zero max_connections");
+    let config_zero: Config =
+        serde_yaml::from_str(&yaml_zero).expect("should deserialize even with invalid value");
+    assert!(
+        config_zero.validate().is_err(),
+        "explicit zero max_connections should be rejected"
+    );
+
+    // Config with omitted max_connections - should be accepted with default
+    let base_config_omitted = Config {
+        version: SUPPORTED_CONFIG_VERSION,
+        server: ServerConfig {
+            bind_address: test_server_config().bind_address,
+            max_connections: test_server_config().max_connections,
+        },
+        upstreams: None,
+        api_keys: None,
+    };
+    let mut yaml_value: Value =
+        serde_yaml::to_value(&base_config_omitted).expect("should serialize config to YAML value");
+    if let Some(server_value) = yaml_value.get_mut("server") {
+        if let Value::Mapping(ref mut map) = server_value {
+            map.remove(&Value::String("max_connections".to_string()));
+        }
+    }
+    let yaml_omitted = serde_yaml::to_string(&yaml_value)
+        .expect("should serialize YAML value without max_connections");
+    let config_omitted: Config = serde_yaml::from_str(&yaml_omitted)
+        .expect("should deserialize config without max_connections");
+    assert!(
+        config_omitted.validate().is_ok(),
+        "omitted max_connections should be accepted"
+    );
+    assert_eq!(
+        config_omitted.server.max_connections, 1024,
+        "should use default"
+    );
+}
+
+#[test]
+fn deserialize_minimal_config_with_only_version() {
+    // Precondition: YAML config with version and empty server section.
+    // Action: Deserialize minimal config.
+    // Expected behavior: All optional server fields use defaults, validation succeeds.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::Config;
+    use serde_yaml::Value;
+
+    // Create minimal config using helper function
+    let base_config = minimal_test_config();
+
+    // Serialize to YAML Value and remove all server fields
+    let mut yaml_value: Value =
+        serde_yaml::to_value(&base_config).expect("should serialize config to YAML value");
+
+    if let Some(server_value) = yaml_value.get_mut("server") {
+        if let Value::Mapping(ref mut map) = server_value {
+            map.remove(&Value::String("bind_address".to_string()));
+            map.remove(&Value::String("max_connections".to_string()));
+        }
+    }
+
+    // Serialize back to string and deserialize
+    let yaml = serde_yaml::to_string(&yaml_value).expect("should serialize YAML value");
+    let config: Config = serde_yaml::from_str(&yaml).expect("should deserialize minimal config");
+
+    assert!(config.validate().is_ok(), "minimal config should be valid");
+    assert_eq!(
+        config.server.bind_address, "0.0.0.0:8080",
+        "bind_address should use default"
+    );
+    assert_eq!(
+        config.server.max_connections, 1024,
+        "max_connections should use default"
+    );
+    assert_eq!(config.upstreams, None, "upstreams should be None");
+    assert_eq!(config.api_keys, None, "api_keys should be None");
+}
+
+#[test]
+fn deserialize_config_with_empty_server_section() {
+    // Precondition: YAML config with empty server section.
+    // Action: Deserialize config with empty server section.
+    // Expected behavior: All server fields use defaults, validation succeeds.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::Config;
+    use serde_yaml::Value;
+
+    // Create minimal config using helper function
+    let base_config = minimal_test_config();
+
+    // Serialize to YAML Value and remove all server fields
+    let mut yaml_value: Value =
+        serde_yaml::to_value(&base_config).expect("should serialize config to YAML value");
+
+    if let Some(server_value) = yaml_value.get_mut("server") {
+        if let Value::Mapping(ref mut map) = server_value {
+            map.remove(&Value::String("bind_address".to_string()));
+            map.remove(&Value::String("max_connections".to_string()));
+        }
+    }
+
+    // Serialize back to string and deserialize
+    let yaml = serde_yaml::to_string(&yaml_value).expect("should serialize YAML value");
+    let config: Config =
+        serde_yaml::from_str(&yaml).expect("should deserialize config with empty server section");
+
+    assert!(
+        config.validate().is_ok(),
+        "config with empty server should be valid"
+    );
+    assert_eq!(
+        config.server.bind_address, "0.0.0.0:8080",
+        "bind_address should use default"
+    );
+    assert_eq!(
+        config.server.max_connections, 1024,
+        "max_connections should use default"
+    );
+}
+
+#[test]
+fn deserialize_config_with_empty_upstreams_section() {
+    // Precondition: YAML config with empty upstreams section (no entries, no timeout).
+    // Action: Deserialize config with empty upstreams section.
+    // Expected behavior: request_timeout_ms uses default, validation succeeds.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::Config;
+    use serde_yaml::Value;
+
+    // Create config with empty upstreams using helper functions
+    let base_config = test_config(Some(test_upstreams_config(30_000, vec![])), None);
+
+    // Serialize to YAML Value and remove request_timeout_ms
+    let mut yaml_value: Value =
+        serde_yaml::to_value(&base_config).expect("should serialize config to YAML value");
+
+    if let Some(upstreams_value) = yaml_value.get_mut("upstreams") {
+        if let Value::Mapping(ref mut map) = upstreams_value {
+            map.remove(&Value::String("request_timeout_ms".to_string()));
+        }
+    }
+
+    // Serialize back to string and deserialize
+    let yaml = serde_yaml::to_string(&yaml_value).expect("should serialize YAML value");
+    let config: Config = serde_yaml::from_str(&yaml)
+        .expect("should deserialize config with empty upstreams section");
+
+    assert!(
+        config.validate().is_ok(),
+        "config with empty upstreams should be valid"
+    );
+    assert_eq!(
+        config.upstream_timeout(),
+        Some(120_000),
+        "timeout should use default"
+    );
+    assert!(!config.has_upstreams(), "should have no upstreams");
+}
+
+#[test]
+fn default_config_uses_same_values_as_serde_defaults() {
+    // Precondition: Config created via Default trait and via deserialization with omitted fields.
+    // Action: Compare values from both sources.
+    // Expected behavior: Both use same default values.
+    // Covers Requirements: C2, C8
+    use fluxgate::config::Config;
+    use serde_yaml::Value;
+
+    let default_config = Config::default();
+
+    // Create minimal config using helper function
+    let base_config = minimal_test_config();
+
+    // Serialize to YAML Value and remove all server fields
+    let mut yaml_value: Value =
+        serde_yaml::to_value(&base_config).expect("should serialize config to YAML value");
+
+    if let Some(server_value) = yaml_value.get_mut("server") {
+        if let Value::Mapping(ref mut map) = server_value {
+            map.remove(&Value::String("bind_address".to_string()));
+            map.remove(&Value::String("max_connections".to_string()));
+        }
+    }
+
+    // Serialize back to string and deserialize
+    let yaml = serde_yaml::to_string(&yaml_value).expect("should serialize YAML value");
+    let deserialized_config: Config =
+        serde_yaml::from_str(&yaml).expect("should deserialize minimal config");
+
+    assert_eq!(
+        default_config.server.bind_address, deserialized_config.server.bind_address,
+        "Default and deserialized bind_address should match"
+    );
+    assert_eq!(
+        default_config.server.max_connections, deserialized_config.server.max_connections,
+        "Default and deserialized max_connections should match"
+    );
+    assert_eq!(
+        default_config.server.bind_address, "0.0.0.0:8080",
+        "Default bind_address should be 0.0.0.0:8080"
+    );
+    assert_eq!(
+        default_config.server.max_connections, 1024,
+        "Default max_connections should be 1024"
     );
 }
 

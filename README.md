@@ -5,10 +5,10 @@
 **High-performance proxy for LLM providers**
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/rust-1.0+-orange.svg)](https://www.rust-lang.org/)
+[![Status](https://img.shields.io/badge/status-active-success?style=flat-square)](https://github.com/amogil/fluxgate)
+[![Rust](https://img.shields.io/badge/rust-1.8+-orange.svg)](https://www.rust-lang.org/)
 [![GitHub stars](https://img.shields.io/github/stars/amogil/fluxgate?style=flat-square&logo=github)](https://github.com/amogil/fluxgate/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/amogil/fluxgate?style=flat-square&logo=github)](https://github.com/amogil/fluxgate/network/members)
-[![Status](https://img.shields.io/badge/status-active-success?style=flat-square)](https://github.com/amogil/fluxgate)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey?style=flat-square&logo=linux)](https://github.com/amogil/fluxgate)
 
 </div>
@@ -33,18 +33,11 @@ Fluxgate is a high-performance proxy that sits between client applications and l
 ```yaml
 version: 1
 
-server:
-  bind_address: "0.0.0.0:8080"
-
 upstreams:
   openai:
     request_path: "/openai"
     target_url: "https://api.openai.com"
     api_key: "sk-proj-abc123xyz789"
-  anthropic:
-    request_path: "/anthropic"
-    target_url: "https://api.anthropic.com"
-    api_key: "sk-ant-api03-abc123xyz789"
 
 api_keys:
   static:
@@ -52,7 +45,7 @@ api_keys:
       key: "2qqwZ2MrffFMBguNMGVr"
 ```
 
-- Specify your OpenAI and Anthropic API keys in the `upstreams` section.
+- Specify your OpenAI API key in the `upstreams` section.
 - Generate any string as the client API key in the `api_keys.static` section.
 
 2. **Build and run the container:**
