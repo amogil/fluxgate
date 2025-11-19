@@ -187,12 +187,9 @@ async fn proxy_handler(
     let config = state.config_receiver.borrow().clone();
     let max_connections = config.server.max_connections.max(1);
     state.connection_limiter.ensure_limit(max_connections);
-    
+
     // Extract upstream timeout before await point to avoid repeated calls
-    let upstream_timeout_ms = config
-        .upstream_timeout()
-        .unwrap_or(120_000)
-        .max(1);
+    let upstream_timeout_ms = config.upstream_timeout().unwrap_or(120_000).max(1);
 
     // Requirement: F8 - Return HTTP 503 when connection limit reached
     // Try to acquire connection permit - reject with 503 if limit reached
@@ -509,8 +506,7 @@ async fn proxy_handler(
     // Requirement: F1, F2 - Replace Authorization header with upstream credentials
     // Add upstream API key if configured
     if !upstream_api_key.is_empty() {
-        upstream_req =
-            upstream_req.header(AUTHORIZATION, format!("Bearer {}", upstream_api_key));
+        upstream_req = upstream_req.header(AUTHORIZATION, format!("Bearer {}", upstream_api_key));
     }
 
     // Requirement: F13, P4 - Stream request body without loading into memory
