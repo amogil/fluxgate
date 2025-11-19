@@ -75,7 +75,7 @@ upstreams:
   openai:
     request_path: "/openai"
     target_url: "https://api.openai.com"
-    api_key: "sk-proj-abc123xyz789"
+    api_key: "<OPEN_AI_KEY>"
 
 api_keys:
   static:
