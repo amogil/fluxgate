@@ -63,6 +63,8 @@ fn default_max_connections() -> u32 {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Config {
     pub version: u8,
+    /// Requirement: C8 - Optional section with default values for bind_address and max_connections
+    #[serde(default)]
     pub server: ServerConfig,
     pub upstreams: Option<UpstreamsConfig>,
     pub api_keys: Option<ApiKeysConfig>,
@@ -495,6 +497,15 @@ pub struct ServerConfig {
     /// Requirement: C8 - Optional field with default value 1024
     #[serde(default = "default_max_connections")]
     pub max_connections: u32,
+}
+
+impl Default for ServerConfig {
+    fn default() -> Self {
+        Self {
+            bind_address: default_bind_address(),
+            max_connections: default_max_connections(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
