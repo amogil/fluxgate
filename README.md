@@ -2,7 +2,7 @@
 
 <div align="center">
 
-*High-performance proxy for LLM providers*
+**High-performance proxy for LLM providers**
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-active-success?style=flat-square)](https://github.com/amogil/fluxgate)
