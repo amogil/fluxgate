@@ -2087,7 +2087,7 @@ server:
     std::fs::write(&config_path, initial_config).expect("write initial config");
 
     let manager = ConfigManager::initialize(Some(config_path.clone())).await;
-    let mut receiver = manager.subscribe();
+    let receiver = manager.subscribe();
 
     // Get initial value (subscribe returns immediately with current value)
     assert_eq!(receiver.borrow().server.max_connections, 100);
@@ -2102,16 +2102,19 @@ server:
 "#;
     std::fs::write(&config_path, updated_config).expect("write updated config");
 
-    // Wait for watcher to detect and apply change (polling interval is 1s, wait for at least 3 cycles)
-    // In CI environments, file system operations may be slower, so we wait longer
-    tokio::time::sleep(Duration::from_millis(3000)).await;
-
-    // Check that receiver got update with timeout
-    // Increased timeout for CI environments where file system operations may be slower
-    tokio::time::timeout(Duration::from_secs(10), receiver.changed())
-        .await
-        .expect("timeout waiting for update")
-        .expect("should receive update");
+    // Poll for update: watcher polls every 1s, so we check periodically
+    // In CI environments, file system operations may be slower, so we use longer timeout
+    let start = std::time::Instant::now();
+    let timeout = Duration::from_secs(15);
+    loop {
+        if receiver.borrow().server.max_connections == 200 {
+            break;
+        }
+        if start.elapsed() > timeout {
+            panic!("timeout waiting for update: expected max_connections=200, got {}", receiver.borrow().server.max_connections);
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
     assert_eq!(receiver.borrow().server.max_connections, 200);
 }
 
@@ -2133,8 +2136,8 @@ server:
     std::fs::write(&config_path, initial_config).expect("write initial config");
 
     let manager = ConfigManager::initialize(Some(config_path.clone())).await;
-    let mut receiver1 = manager.subscribe();
-    let mut receiver2 = manager.subscribe();
+    let receiver1 = manager.subscribe();
+    let receiver2 = manager.subscribe();
 
     // Get initial values (subscribe returns immediately with current value)
     assert_eq!(receiver1.borrow().server.max_connections, 100);
@@ -2150,20 +2153,21 @@ server:
 "#;
     std::fs::write(&config_path, updated_config).expect("write updated config");
 
-    // Wait for watcher to detect and apply change (polling interval is 1s, wait for at least 3 cycles)
-    // In CI environments, file system operations may be slower, so we wait longer
-    tokio::time::sleep(Duration::from_millis(3000)).await;
-
-    // Both receivers should get update with timeout
-    // Increased timeout for CI environments where file system operations may be slower
-    tokio::time::timeout(Duration::from_secs(10), receiver1.changed())
-        .await
-        .expect("timeout waiting for receiver1 update")
-        .expect("should receive update");
-    tokio::time::timeout(Duration::from_secs(10), receiver2.changed())
-        .await
-        .expect("timeout waiting for receiver2 update")
-        .expect("should receive update");
+    // Poll for updates: watcher polls every 1s, so we check periodically
+    // In CI environments, file system operations may be slower, so we use longer timeout
+    let start = std::time::Instant::now();
+    let timeout = Duration::from_secs(15);
+    loop {
+        let val1 = receiver1.borrow().server.max_connections;
+        let val2 = receiver2.borrow().server.max_connections;
+        if val1 == 300 && val2 == 300 {
+            break;
+        }
+        if start.elapsed() > timeout {
+            panic!("timeout waiting for updates: receiver1={}, receiver2={}", val1, val2);
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
     assert_eq!(receiver1.borrow().server.max_connections, 300);
     assert_eq!(receiver2.borrow().server.max_connections, 300);
 }
