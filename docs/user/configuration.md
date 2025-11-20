@@ -22,7 +22,21 @@ api_keys:
         - openai
 ```
 
-A complete reference configuration is available at [`config/fluxgate.yaml`](../../config/fluxgate.yaml).
+This minimal configuration sets up:
+
+- **`version`**: Configuration schema version (must be `1`)
+- **`upstreams`**: Defines one upstream provider:
+  - **`request_timeout_ms`**: Maximum request timeout (120 seconds)
+  - **`openai`**: Upstream identifier for OpenAI API
+    - **`request_path`**: Path prefix `/openai` that routes requests to this upstream
+    - **`target_url`**: The actual OpenAI API endpoint (`https://api.openai.com`)
+    - **`api_key`**: Provider API key that will be used to authenticate with OpenAI
+- **`api_keys.static`**: Defines one client API key:
+  - **`id`**: Human-readable label (`pr`) for observability
+  - **`key`**: Client API key that clients must use in the Authorization header
+  - **`upstreams`**: List of upstreams this key can access (only `openai` in this example)
+
+With this configuration, clients can send requests to `http://localhost:8080/openai/*` using the client API key (`<CLIENT_KEY>`), and Fluxgate will proxy them to OpenAI's API using the provider API key (`<OPENAI_KEY>`).
 
 ## Configuration File Location
 
@@ -65,45 +79,182 @@ Invalid configurations are rejected without interrupting the running process. If
 | `api_keys.jwt[].id`             | _None_         | Required | Human-readable label for the JWT API key (for observability only, used in logs). Must be non-empty and unique across all JWT API keys.                                                                                                                                                                                                                                                                              |
 | `api_keys.jwt[].key`            | _None_         | Required | JWT API key value used for verifying JWT token signatures (must be non-empty string; may be duplicated across different JWT entries).                                                                                                                                                                                                                                                                               |
 
-## Example Configuration
+## Client API Keys
 
-A complete example configuration file is available at `config/fluxgate.yaml`. Here's a sample:
+Fluxgate supports two types of client API keys for authenticating incoming requests: **static API keys** and **JWT tokens**. Both types use the `Authorization` header with the Bearer scheme.
+
+### Bearer Authentication Scheme
+
+All authentication must use the `Bearer` authentication scheme:
+
+```
+Authorization: Bearer <api_key_or_jwt_token>
+```
+
+Requests with non-Bearer authentication schemes (e.g., `Token`, `Basic`, `Digest`) are rejected with HTTP 401.
+
+### Static API Keys
+
+Static API keys are simple string values that clients present directly in the `Authorization` header. They provide a straightforward authentication mechanism suitable for server-to-server communication.
+
+#### How Static Keys Work
+
+1. **Configuration**: Static keys are defined in the `api_keys.static` section with a unique `key` value
+2. **Authentication**: Clients send the exact key string in the `Authorization: Bearer <key>` header
+3. **Validation**: The proxy performs an exact string match against configured static keys
+4. **Access Control**: Each static key can be restricted to specific upstreams via the `upstreams` parameter
+
+#### Structure
 
 ```yaml
-version: 1
-
-server:
-  bind_address: "0.0.0.0:8080"
-  max_connections: 1024
-
-upstreams:
-  request_timeout_ms: 120000
-  openai-1:
-    request_path: "/openai"
-    target_url: "https://api.openai.com"
-    api_key: "sk-openai-key"
-  anthropic-1:
-    request_path: "/anthropic"
-    target_url: "https://api.anthropic.com"
-    api_key: "sk-ant-api-key"
-
 api_keys:
   static:
-    - id: pr
-      key: 2qqwZ2MrffFMBguNMGVr
-      upstreams:
-        - openai-1
-        - anthropic-1
-    - id: marketing
-      key: K1Rm67rX9vokI9sh555I
-      upstreams:
-        - anthropic-1
-  jwt:
-    - id: dev
-      key: "REPLACE_WITH_JWT_SECRET_KEY"
-    - id: test
-      key: "REPLACE_WITH_JWT_SECRET_KEY"
+    - id: pr                       # Optional: human-readable label for logs
+      key: "<CLIENT_KEY>"          # Required: the actual key value
+      upstreams:                   # Optional: list of allowed upstreams
+        - openai
+        - anthropic
 ```
+
+- **`id`** (optional): A human-readable identifier used in logs for observability. If specified, must be unique across all static API keys
+- **`key`** (required): The exact string value that clients must send. Must be unique across all static API keys
+- **`upstreams`** (optional): List of upstream identifiers this key can access. When empty or omitted, the key has access to all configured upstreams. If `upstreams` is empty or omitted and no upstreams are configured, requests with this API key are rejected with HTTP 401
+
+#### Usage Example
+
+```bash
+curl -H "Authorization: Bearer <CLIENT_KEY>" \
+  http://localhost:8080/openai/v1/models
+```
+
+The proxy checks static keys first (before JWT tokens) for fast authentication. If the token doesn't match any static key and looks like a JWT (three parts separated by dots), it proceeds to JWT validation.
+
+### JWT Tokens
+
+JWT (JSON Web Token) tokens provide time-limited, cryptographically signed authentication. They are dynamically generated by your authentication service and include expiration and validity windows.
+
+For an introduction to JWT tokens and how they work, see [jwt.io](https://jwt.io/introduction) or the [RFC 7519 specification](https://datatracker.ietf.org/doc/html/rfc7519).
+
+#### How JWT Tokens Work
+
+1. **Configuration**: JWT secret keys are defined in the `api_keys.jwt` section with an `id` and a `key` (secret)
+2. **Token Generation**: Your authentication service creates JWT tokens signed with the secret key
+3. **Token Structure**: JWT tokens consist of three base64url-encoded parts: `header.payload.signature`
+4. **Authentication**: Clients send the complete JWT token in the `Authorization: Bearer <token>` header
+5. **Validation**: The proxy validates the token's signature, algorithm, expiration, and key identifier
+
+#### Structure
+
+```yaml
+api_keys:
+  jwt:
+    - id: dev                   # Required: must match 'kid' in JWT header
+      key: "secret-key-123"     # Required: secret used to sign/verify tokens
+    - id: test                  # Required: unique identifier
+      key: "secret-key-456"     # Can be same or different from other JWT keys
+```
+
+- **`id`** (required): Must match the `kid` (key ID) field in the JWT token header. Must be unique across all JWT API keys
+- **`key`** (required): The secret key used to sign and verify JWT tokens. Can be duplicated across different JWT entries (allowing multiple `id` values to share the same secret)
+
+#### JWT Token Requirements
+
+JWT tokens must meet the following requirements:
+
+- **Format:** Three base64url-encoded parts separated by dots: `header.payload.signature`
+- **Algorithm:** Must use `HS256` (HMAC-SHA256) for signature verification
+- **Type:** Header must contain `typ: "JWT"`
+- **Key ID:** Header must contain `kid` (key identifier) that matches one of the `id` values in `api_keys.jwt` configuration
+- **Expiration:** Optional `exp` claim (Unix timestamp in seconds) - if present, token must not be expired
+- **Not Before:** Optional `nbf` claim (Unix timestamp in seconds) - if present, current time must be >= nbf
+
+#### JWT Token Format
+
+A JWT token has three parts separated by dots:
+
+```
+header.payload.signature
+```
+
+**Header** (base64url-encoded JSON):
+```json
+{
+  "alg": "HS256",    // Must be HS256
+  "typ": "JWT",      // Must be "JWT"
+  "kid": "dev"       // Must match an api_keys.jwt[].id
+}
+```
+
+**Payload** (base64url-encoded JSON):
+```json
+{
+  "exp": 1735689600,  // Optional: expiration time (Unix timestamp)
+  "nbf": 1735603200   // Optional: not-before time (Unix timestamp)
+}
+```
+
+**Signature**: HMAC-SHA256 signature of `header.payload` using the secret key
+
+#### Creating JWT Tokens
+
+JWT tokens must be signed using the secret key (`key`) from the matching `api_keys.jwt` entry. The `kid` in the token header must match the `id` of the JWT key configuration entry.
+
+#### Validation Process
+
+The proxy validates JWT tokens in the following order:
+
+1. **Parse token**: Split into header, payload, and signature parts
+2. **Verify algorithm**: Check that `alg` is `HS256`
+3. **Verify type**: Check that `typ` is `JWT`
+4. **Match key ID**: Find a JWT key configuration where `id` matches the `kid` in the token header
+5. **Verify signature**: Recompute the signature using the matching secret key and compare
+6. **Check expiration**: If `exp` is present, ensure current time < expiration time
+7. **Check not-before**: If `nbf` is present, ensure current time >= not-before time
+
+If any step fails, the request is rejected with HTTP 401.
+
+#### Usage Example
+
+```bash
+curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImRldiJ9.eyJleHAiOjE3MzU2ODk2MDAsIm5iZiI6MTczNTYwMzIwMH0.signature" \
+  http://localhost:8080/openai/v1/models
+```
+
+#### Access Control
+
+JWT tokens **always have access to all configured upstreams**. Unlike static API keys, JWT tokens do not support the `upstreams` parameter to restrict access to specific upstreams. If no upstreams are configured, requests with valid JWT tokens are rejected with HTTP 401.
+
+### Authentication Order
+
+The proxy checks authentication in this order:
+
+1. **Static API keys** - Checked first for exact string match (fast lookup)
+2. **JWT tokens** - Checked only if the token looks like a JWT (three parts separated by dots)
+
+This ensures static keys are validated quickly, and the more expensive JWT validation only occurs when necessary.
+
+### Authentication Failures
+
+The proxy rejects requests with HTTP 401 in the following cases:
+
+- Missing `Authorization` header
+- Non-Bearer authentication scheme
+- Static API key not found in `api_keys.static`
+- JWT token format invalid (not three parts separated by dots)
+- JWT token validation fails (invalid signature, wrong algorithm, expired, etc.)
+- API key's `upstreams` list is empty and no upstreams are configured
+- API key refers to no permitted upstreams
+
+### Request Routing After Authentication
+
+After successful authentication, the proxy:
+
+1. Resolves the target upstream based on the request path matching the `request_path` parameter
+2. Replaces the outbound `Authorization` header with the upstream's configured API key
+3. Forwards the request to the selected upstream
+4. Streams the upstream response back to the client
+
+If no upstream matches the request path, the proxy rejects the request with HTTP 404 (Not Found).
 
 ## Configuration Validation
 
@@ -112,8 +263,8 @@ All configurations undergo validation before activation. If the YAML file is mis
 ### Validation Rules
 
 - **`request_path`**: Must start with `/`, must not contain scheme (`://`), query string (`?`), or host/port components. Must be unique across all configured upstreams.
-- **`api_keys.static[].key`**: Must be unique across all configured API keys.
-- **`api_keys.static[].id`**: If specified, must be non-empty and unique across all API keys.
+- **`api_keys.static[].key`**: Must be unique across all static API keys.
+- **`api_keys.static[].id`**: If specified, must be non-empty and unique across all static API keys.
 - **`api_keys.jwt[].id`**: Must be present, non-empty, and unique across all JWT API keys.
 - **`api_keys.jwt[].key`**: Must be present and non-empty (may be duplicated across different JWT entries).
 
@@ -163,3 +314,89 @@ See the [Logging Guide](logging.md) for detailed information about log levels, s
 
 The proxy does not support HTTP upgrade mechanisms (such as WebSocket) or the CONNECT method and will reject such requests with `501 Not Implemented`.
 
+## Examples
+
+### Multiple Upstream Providers
+
+This example shows how to configure Fluxgate with multiple upstream providers (OpenAI, Anthropic, and DeepSeek):
+
+```yaml
+version: 1
+
+server:
+  bind_address: "0.0.0.0:8080"
+  max_connections: 1024
+
+upstreams:
+  request_timeout_ms: 120000
+  openai:
+    request_path: "/openai"
+    target_url: "https://api.openai.com"
+    api_key: "<OPENAI_API_KEY>"
+  anthropic:
+    request_path: "/anthropic"
+    target_url: "https://api.anthropic.com"
+    api_key: "<ANTHROPIC_API_KEY>"
+  deepseek:
+    request_path: "/deepseek"
+    target_url: "https://api.deepseek.com"
+    api_key: "<DEEPSEEK_API_KEY>"
+
+api_keys:
+  static:
+    - id: pr
+      key: "<CLIENT_KEY_1>"
+      upstreams:
+        - openai
+        - anthropic
+    - id: dev
+      key: "<CLIENT_KEY_2>"
+      upstreams:
+        - deepseek
+    - id: admin
+      key: "<CLIENT_KEY_3>"
+      # No upstreams specified - access to all upstreams
+```
+
+With this configuration:
+- Clients with `CLIENT_KEY_1` can access OpenAI and Anthropic APIs via `/openai/*` and `/anthropic/*` paths
+- Clients with `CLIENT_KEY_2` can access DeepSeek API via `/deepseek/*` path
+- Clients with `CLIENT_KEY_3` can access all three providers (OpenAI, Anthropic, and DeepSeek)
+
+### JWT Token Authentication
+
+This example shows how to configure Fluxgate using only JWT tokens for authentication:
+
+```yaml
+version: 1
+
+server:
+  bind_address: "0.0.0.0:8080"
+  max_connections: 1024
+
+upstreams:
+  request_timeout_ms: 120000
+  openai:
+    request_path: "/openai"
+    target_url: "https://api.openai.com"
+    api_key: "<OPENAI_API_KEY>"
+  anthropic:
+    request_path: "/anthropic"
+    target_url: "https://api.anthropic.com"
+    api_key: "<ANTHROPIC_API_KEY>"
+  deepseek:
+    request_path: "/deepseek"
+    target_url: "https://api.deepseek.com"
+    api_key: "<DEEPSEEK_API_KEY>"
+
+api_keys:
+  jwt:
+    - id: dev
+      key: "<JWT_SECRET_KEY_1>"
+    - id: test
+      key: "<JWT_SECRET_KEY_2>"
+```
+
+With this configuration:
+- Clients with JWT tokens signed with `JWT_SECRET_KEY_1` and `kid: "dev"` in the header can access all upstreams (OpenAI, Anthropic, and DeepSeek)
+- Clients with JWT tokens signed with `JWT_SECRET_KEY_2` and `kid: "test"` in the header can access all upstreams

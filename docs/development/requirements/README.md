@@ -219,7 +219,7 @@ grep -r "api[_-]key" docs/development/requirements/ config/ | grep -v "REPLACE\|
 # Check if changes require updates to:
 # - README.md (root) - for high-level changes
 # - docs/user/configuration.md - for configuration changes
-# - docs/user/authentication.md - for authentication changes
+# - docs/user/configuration.md - for authentication changes (see Client API Keys section)
 # - docs/user/logging.md - for logging/observability changes
 ```
 
@@ -487,7 +487,7 @@ make validate-requirements
    - Update README.md if behavior changes (keep it focused on selling points)
    - Update user documentation in `docs/user/` if changes affect:
      - Configuration (`docs/user/configuration.md`)
-     - Authentication (`docs/user/authentication.md`)
+     - Authentication (`docs/user/configuration.md#client-api-keys`)
      - Logging (`docs/user/logging.md`)
    - Update feature docs in `docs/development/features/` if requirements change
    - Verify examples are accurate
@@ -554,7 +554,7 @@ make full-validate
 - [ ] User documentation updated (if changes affect user-facing behavior):
   - [ ] README.md (root) - updated for high-level changes
   - [ ] docs/user/configuration.md - updated for configuration changes
-  - [ ] docs/user/authentication.md - updated for authentication changes
+  - [ ] docs/user/configuration.md - updated for authentication changes
   - [ ] docs/user/logging.md - updated for logging/observability changes
 - [ ] No keys/secrets in code or examples
 - [ ] Security requirements checked (if applicable)
