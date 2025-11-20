@@ -117,7 +117,7 @@ Compose, and others. See the [Deployment Guide](docs/user/deployment.md) for com
   Kubernetes, and orchestration platforms
 - **[Configuration Guide](docs/user/configuration.md)** - Complete configuration reference, parameters, validation
   rules, hot reloading, and examples
-- **[Authentication Guide](docs/user/authentication.md)** - Static API keys and JWT token authentication setup and usage
+- **[Configuration Guide](docs/user/configuration.md#client-api-keys)** - Static API keys and JWT token authentication setup and usage
 - **[Logging Guide](docs/user/logging.md)** - Log configuration, levels, structured fields, and observability
 
 ## 📝 License

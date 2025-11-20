@@ -1,12 +1,12 @@
 # Logging
 
-Fluxgate uses structured logging with the `tracing` framework to provide observability into proxy operations. All log entries include timestamps and structured fields for easy parsing and analysis.
+Fluxgate uses structured logging to provide observability into proxy operations. All log entries include timestamps and structured fields for easy parsing and analysis.
 
 ## Log Configuration
 
 ### Log Verbosity
 
-Log verbosity can be controlled via the `FLUXGATE_LOG` environment variable using standard `tracing` directives:
+Log verbosity can be controlled via the `FLUXGATE_LOG` environment variable:
 
 ```bash
 export FLUXGATE_LOG=info
@@ -121,12 +121,6 @@ The HTTP status code of the response sent to the client. Formatted as the numeri
 The length of the response body in bytes, as indicated by the `Content-Length` header (if present). A non-negative integer representing the number of bytes. May be `None` if the response has no body, if the `Content-Length` header is not present, or if the response uses chunked transfer encoding.
 
 **Example:** `2048` or omitted if not available
-
-## Log Entry Structure
-
-All fields in log entries are logged as their actual values, not wrapped in type constructors such as `Some(...)`, `Ok(...)`, or `Err(...)`. For optional fields, when a value is present, it is logged as the actual value. When the value is absent, the field is omitted from the log entry.
-
-Log entries do not include component prefixes (such as `fluxgate::proxy:`, `fluxgate::config:`, etc.) in the log message. The log format only includes the log level, timestamp, and the message content with structured fields.
 
 ## Security
 

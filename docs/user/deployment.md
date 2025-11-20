@@ -143,7 +143,7 @@ The key requirements are:
 
 ## Client Configuration
 
-To use Fluxgate proxy with OpenAI and Anthropic client libraries, configure the `base_url` to point to the proxy endpoint.
+Fluxgate proxy works with any client libraries that support configuring a custom `base_url`. To use Fluxgate proxy, configure the `base_url` to point to the proxy endpoint. Below are examples for OpenAI and Anthropic client libraries.
 
 ### OpenAI SDK
 
