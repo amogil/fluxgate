@@ -28,5 +28,4 @@ test-results/
 
 # Local stuff
 .cursorrules
-.rules.md
 config/fluxgate-test.yaml
