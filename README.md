@@ -116,8 +116,7 @@ Compose, and others. See the [Deployment Guide](docs/user/deployment.md) for com
 - **[Deployment Guide](docs/user/deployment.md)** - Complete deployment options: Docker, binary installation,
   Kubernetes, and orchestration platforms
 - **[Configuration Guide](docs/user/configuration.md)** - Complete configuration reference, parameters, validation
-  rules, hot reloading, and examples
-- **[Configuration Guide](docs/user/configuration.md#client-api-keys)** - Static API keys and JWT token authentication setup and usage
+  rules, hot reloading, examples, and authentication (static API keys and JWT tokens)
 - **[Logging Guide](docs/user/logging.md)** - Log configuration, levels, structured fields, and observability
 
 ## 📝 License
