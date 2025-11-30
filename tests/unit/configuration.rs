@@ -4820,6 +4820,111 @@ api_keys:
     );
 }
 
+#[test]
+fn deserialize_config_without_static_section_but_with_jwt() {
+    // Precondition: YAML config with api_keys containing only jwt section (no static section).
+    // Action: Deserialize config without static section but with jwt section.
+    // Expected behavior: Config deserializes successfully with empty static_ vector and configured jwt keys.
+    // Covers Requirements: C1, C2
+    use fluxgate::config::Config;
+
+    let yaml = r#"
+version: 1
+server:
+  bind_address: "127.0.0.1:8080"
+  max_connections: 100
+upstreams:
+  test-upstream:
+    request_path: "/test"
+    target_url: "https://api.example.com"
+    api_key: "test-key"
+api_keys:
+  jwt:
+    - id: dev
+      key: "EWRWL"
+    - id: test
+      key: "sdkfjiwef2831yhfwuoefasdfkoqd9029"
+"#;
+
+    let config: Config =
+        serde_yaml::from_str(yaml).expect("should deserialize config without static section");
+
+    assert!(
+        config.validate().is_ok(),
+        "config without static section should be valid"
+    );
+    assert!(config.api_keys.is_some(), "should have api_keys section");
+    let api_keys = config.api_keys.as_ref().unwrap();
+    assert!(
+        api_keys.static_.is_empty(),
+        "static_ should be empty when static section is omitted"
+    );
+    assert!(api_keys.jwt.is_some(), "jwt should be configured");
+    let jwt_keys = api_keys.jwt.as_ref().unwrap();
+    assert_eq!(jwt_keys.len(), 2, "should have 2 JWT keys");
+    assert_eq!(jwt_keys[0].id, "dev", "first JWT key should have id 'dev'");
+    assert_eq!(
+        jwt_keys[0].key, "EWRWL",
+        "first JWT key should have correct key"
+    );
+    assert_eq!(
+        jwt_keys[1].id, "test",
+        "second JWT key should have id 'test'"
+    );
+    assert_eq!(
+        jwt_keys[1].key, "sdkfjiwef2831yhfwuoefasdfkoqd9029",
+        "second JWT key should have correct key"
+    );
+
+    // Test that JWT authentication works after deserialization
+    use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+    use serde_json::Map;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    // Create a valid JWT token using the first key
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    let exp = now + 3600;
+
+    let mut header = Header::default();
+    header.alg = Algorithm::HS256;
+    header.typ = Some("JWT".to_string());
+    header.kid = Some("dev".to_string());
+
+    let mut claims = Map::new();
+    claims.insert(
+        "exp".to_string(),
+        serde_json::Value::Number(serde_json::Number::from(exp)),
+    );
+
+    let encoding_key = EncodingKey::from_secret("EWRWL".as_bytes());
+    let token = encode(&header, &claims, &encoding_key).expect("should create JWT token");
+
+    // Verify that authentication works
+    let auth_result = config.authenticate(&token);
+    assert!(
+        auth_result.is_some(),
+        "JWT authentication should work after deserializing config without static section"
+    );
+    let auth = auth_result.unwrap();
+    assert_eq!(
+        auth.api_key,
+        Some("dev".to_string()),
+        "authenticated API key ID should match JWT kid"
+    );
+    assert!(
+        !auth.permitted_upstreams.is_empty(),
+        "JWT should have access to upstreams after deserialization"
+    );
+    assert!(
+        auth.permitted_upstreams
+            .contains(&"test-upstream".to_string()),
+        "JWT should have access to configured upstream"
+    );
+}
+
 #[tokio::test]
 async fn config_manager_reload_fails_on_validation_error() {
     // Precondition: ConfigManager initialized with valid config, then config becomes invalid.
