@@ -5,6 +5,8 @@ on:
     branches: [ '**' ]
 
 name: Commit
+permissions:
+  contents: read
 
 jobs:
   validate:
