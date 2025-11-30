@@ -1,8 +1,8 @@
-# Fluxgate
+<h1 align="center">
 
-<div align="center">
+Fluxgate
 
-**High-performance proxy for LLM providers**
+High-performance proxy for LLM providers
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-active-success?style=flat-square)](https://github.com/amogil/fluxgate)
@@ -11,7 +11,7 @@
 [![GitHub forks](https://img.shields.io/github/forks/amogil/fluxgate?style=flat-square&logo=github)](https://github.com/amogil/fluxgate/network/members)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey?style=flat-square&logo=linux)](https://github.com/amogil/fluxgate)
 
-</div>
+</h1>
 
 ---
 
