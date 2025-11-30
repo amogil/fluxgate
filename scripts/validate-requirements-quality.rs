@@ -522,18 +522,20 @@ fn check_config_consistency(requirements: &HashMap<String, Requirement>, issues:
 }
 
 fn check_auth_consistency(requirements: &HashMap<String, Requirement>, issues: &mut Vec<String>) {
-    // F2 and F3 both handle authentication - check they're consistent
-    if let (Some(f2), Some(f3)) = (requirements.get("F2"), requirements.get("F3")) {
-        // F3 should handle failures before F2 routing
-        let f2_mentions_f3_before = f2.full_text.contains("F3")
-            || f2
+    // F2.1 and F3 both handle authentication - check they're consistent
+    if let (Some(f2_1), Some(f3)) = (requirements.get("F2.1"), requirements.get("F3")) {
+        // F3 should handle failures before F2.2 routing
+        let f2_1_mentions_f3_before = f2_1.full_text.contains("F3")
+            || f2_1
                 .full_text
                 .contains("Authentication failures must be handled before");
-        let f3_mentions_before = f3.full_text.contains("before") || f3.full_text.contains("F2");
+        let f3_mentions_before = f3.full_text.contains("before")
+            || f3.full_text.contains("F2.1")
+            || f3.full_text.contains("F2.2");
 
-        if !f2_mentions_f3_before && !f3_mentions_before {
+        if !f2_1_mentions_f3_before && !f3_mentions_before {
             issues.push(
-                "F2 and F3 should clearly specify order: authentication failures before routing"
+                "F2.1 and F3 should clearly specify order: authentication failures before routing"
                     .to_string(),
             );
         }

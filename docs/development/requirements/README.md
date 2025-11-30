@@ -32,7 +32,7 @@ Requirements are organized in separate files by functional area:
 
 - `00-general.md` - General principles (G1-G11)
 - `01-performance.md` - Performance requirements (P1-P4)
-- `02-functional.md` - Functional requirements (F1-F24)
+- `02-functional.md` - Functional requirements (F1, F2.1-F2.5, F3-F24)
 - `03-configuration.md` - Configuration management (C1-C17)
 - `04-testing.md` - Testing requirements (T1-T2, UT1-UT4, FT1-FT7)
 - `05-cli.md` - Command-line interface (CLI1-CLI4)
