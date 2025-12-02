@@ -533,7 +533,7 @@ pub struct UpstreamEntry {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ApiKeysConfig {
-    #[serde(rename = "static")]
+    #[serde(rename = "static", default)]
     pub static_: Vec<StaticApiKey>,
     #[serde(rename = "jwt")]
     pub jwt: Option<Vec<JwtApiKey>>,

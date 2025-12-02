@@ -1207,3 +1207,104 @@ fn test_validate_jwt_token_correct_kid_but_wrong_key() {
         Err(JwtError::InvalidSignature)
     );
 }
+
+/// # Requirements: F17.1, F18-F24
+#[test]
+fn test_authenticate_without_static_section_proxy_works() {
+    // Precondition: Config with api_keys containing only JWT (no static section)
+    // Action: Authenticate with static key and JWT token
+    // Expected behavior: Static keys don't work (return None), but proxy still works (JWT should work)
+    let jwt_key = test_jwt_key("jwt-key", "jwt-secret");
+    let config = test_config(
+        Some(test_upstreams_config(
+            5000,
+            vec![(
+                "upstream1",
+                test_upstream_entry("https://api1.example.com", "key1"),
+            )],
+        )),
+        Some(test_api_keys_config_with_jwt(vec![], Some(vec![jwt_key]))),
+    );
+
+    // Test that static keys don't work (no static section)
+    let static_token = "some-static-key";
+    let result = config.authenticate(static_token);
+    assert!(
+        result.is_none(),
+        "static keys should not work when static section is empty"
+    );
+
+    // Test that JWT still works
+    let now = current_timestamp();
+    let exp = now + 3600;
+    let jwt_token = create_test_jwt("jwt-key", "jwt-secret", Some(exp), None, Algorithm::HS256);
+    let jwt_result = config.authenticate(&jwt_token);
+    assert!(
+        jwt_result.is_some(),
+        "JWT should work even when static section is empty"
+    );
+    let auth_result = jwt_result.unwrap();
+    assert_eq!(
+        auth_result.permitted_upstreams.len(),
+        1,
+        "JWT should have access to upstreams"
+    );
+    assert!(
+        auth_result
+            .permitted_upstreams
+            .contains(&"upstream1".to_string()),
+        "JWT should have access to configured upstream"
+    );
+}
+
+/// # Requirements: F17.1, F18-F24
+#[test]
+fn test_authenticate_jwt_works_without_static_section() {
+    // Precondition: Config with api_keys containing only JWT (no static section), with multiple upstreams
+    // Action: Authenticate valid JWT token
+    // Expected behavior: JWT authentication succeeds and provides access to all upstreams
+    let jwt_key = test_jwt_key("jwt-key", "jwt-secret");
+    let config = test_config(
+        Some(test_upstreams_config(
+            5000,
+            vec![
+                (
+                    "upstream1",
+                    test_upstream_entry("https://api1.example.com", "key1"),
+                ),
+                (
+                    "upstream2",
+                    test_upstream_entry("https://api2.example.com", "key2"),
+                ),
+            ],
+        )),
+        Some(test_api_keys_config_with_jwt(vec![], Some(vec![jwt_key]))),
+    );
+
+    let now = current_timestamp();
+    let exp = now + 3600;
+    let token = create_test_jwt("jwt-key", "jwt-secret", Some(exp), None, Algorithm::HS256);
+    let result = config.authenticate(&token);
+    assert!(
+        result.is_some(),
+        "JWT authentication should succeed when static section is empty"
+    );
+    let auth_result = result.unwrap();
+    assert_eq!(
+        auth_result.permitted_upstreams.len(),
+        2,
+        "JWT should have access to all upstreams"
+    );
+    assert!(
+        auth_result
+            .permitted_upstreams
+            .contains(&"upstream1".to_string()),
+        "JWT should have access to upstream1"
+    );
+    assert!(
+        auth_result
+            .permitted_upstreams
+            .contains(&"upstream2".to_string()),
+        "JWT should have access to upstream2"
+    );
+}
