@@ -17,27 +17,71 @@ required by RFC 7230.
 
 ## Authentication & Routing
 
-**F2.** The proxy must authenticate inbound requests using the client API key or JWT token from the `Authorization` header
+**F2.1.** The proxy must authenticate inbound requests using the client API key or JWT token from the `Authorization` header
 (if authentication is required). The authentication may use either a static API key from `api_keys.static` or a JWT token
-from `api_keys.jwt`. The order of authentication attempts is specified in F17.1. After successful authentication, the proxy
-must resolve the target upstream according to the request path matching the `request_path` parameter configured for each
-upstream, replace the outbound `Authorization` header with the upstream's configured API key, forward the request to the
-selected upstream, and stream the upstream response back to the client. The proxy must match the request URI path (excluding
-query string) against the `request_path` values of all upstreams accessible to the authenticated API key (or all upstreams
-if authentication is not required) and select the upstream whose `request_path` is a prefix of the request path. Path
-matching must be performed after normalizing trailing slashes (treating `/path` and `/path/` as equivalent for matching
-purposes, but preserving the original path when forwarding to upstream). If multiple upstreams have matching `request_path`
-values, the proxy must select the upstream with the longest matching `request_path`. If no upstream matches the request path,
-the proxy must reject the request with HTTP 404 (Not Found). Authentication failures must be handled before path matching
-(see F3, F17.1, F18-F24).
+from `api_keys.jwt`. The order of authentication attempts is specified in F17.1. Authentication failures must be handled
+before path matching (see F3, F17.1, F18-F24).
 
-**Tags:** `authentication`, `routing`, `path-matching`
+**Tags:** `authentication`
 
 **Related Requirements:**
 - F3: Authentication failure handling
 - F17.1: Order of authentication attempts (JWT vs static API key)
+- F18-F24: JWT token authentication details
+
+---
+
+**F2.2.** After successful authentication (if authentication is required), the proxy must resolve the target upstream
+according to the request path matching the `request_path` parameter configured for each upstream. The proxy must match the
+request URI path (excluding query string) against the `request_path` values of all upstreams accessible to the authenticated
+API key (or all upstreams if authentication is not required) and select the upstream whose `request_path` is a prefix of the
+request path.
+
+**Tags:** `routing`, `path-matching`
+
+**Related Requirements:**
+- F2.1: Authentication requirement
+- F2.3: Path matching rules
 - C8: Configuration parameters
 - C15: request_path validation
+
+---
+
+**F2.3.** Path matching must be performed after normalizing trailing slashes (treating `/path` and `/path/` as equivalent for
+matching purposes, but preserving the original path when forwarding to upstream). If multiple upstreams have matching
+`request_path` values, the proxy must select the upstream with the longest matching `request_path`. If no upstream matches
+the request path, the proxy must reject the request with HTTP 404 (Not Found).
+
+**Tags:** `path-matching`, `routing`, `http-404`
+
+**Related Requirements:**
+- F2.2: Upstream resolution based on path matching
+- F3: Error handling (404 when no match)
+
+---
+
+**F2.4.** After selecting the target upstream, the proxy must replace the outbound `Authorization` header with the upstream's
+configured API key.
+
+**Tags:** `request-forwarding`, `header-preservation`
+
+**Related Requirements:**
+- F2.2: Upstream resolution
+- F1: Request forwarding requirements
+
+---
+
+**F2.5.** After replacing the Authorization header, the proxy must forward the request to the selected upstream and stream the
+upstream response back to the client.
+
+**Tags:** `request-forwarding`, `response-forwarding`, `streaming`
+
+**Related Requirements:**
+- F2.4: Authorization header replacement
+- F1: Request forwarding requirements
+- F4: Response forwarding requirements
+- F12: Streaming semantics for HTTP/1.1 and HTTP/2
+- P4: Streaming to minimize buffering
 
 ---
 
@@ -57,7 +101,7 @@ upstreams are configured, requests with this JWT token must be rejected with HTT
 **Tags:** `authentication`, `error-handling`, `http-401`, `http-404`
 
 **Related Requirements:**
-- F2: Authentication and routing (F3 handles failures before F2 routing)
+- F2.1: Authentication requirement (F3 handles failures before F2.2 routing)
 - F5: Bearer authentication scheme
 - F18-F24: JWT token authentication
 
@@ -258,7 +302,7 @@ Unit tests for functional requirements are organized in the following files:
 
 - **`tests/unit/functional.rs`** - Documentation and organization hub for functional requirement tests
 - **`tests/unit/proxy.rs`** - Tests for F1 (URL building, header handling), F11 (HTTP protocol support), F14 (CONNECT/Upgrade)
-- **`tests/unit/request_path_routing.rs`** - Tests for F1, F2, F3 (path matching, routing, authentication)
+- **`tests/unit/request_path_routing.rs`** - Tests for F1, F2.1-F2.5, F3 (path matching, routing, authentication)
 - **`tests/unit/config_manager.rs`** - Tests for F1, F3 (authentication, authenticate method)
 - **`tests/unit/jwt_auth.rs`** - Tests for F18-F24 (JWT token authentication, header validation, signature verification, expiration checks)
 
