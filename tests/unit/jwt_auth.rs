@@ -62,37 +62,36 @@ fn current_timestamp() -> i64 {
         .as_secs() as i64
 }
 
-/// # Requirements: F18
-/// Test that is_jwt_format correctly identifies JWT format tokens
 #[test]
 fn test_is_jwt_format_valid() {
     // Precondition: Valid JWT format has three parts separated by dots
     // Action: Check if token matches JWT format
     // Expected behavior: Returns true for valid JWT format
+    // Covers Requirements: F18
     assert!(is_jwt_format("header.payload.signature"));
     assert!(is_jwt_format(
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature"
     ));
 }
 
-/// # Requirements: F18
 #[test]
 fn test_is_jwt_format_invalid() {
     // Precondition: Invalid formats
     // Action: Check if token matches JWT format
     // Expected behavior: Returns false for invalid formats
+    // Covers Requirements: F18
     assert!(!is_jwt_format("not-a-jwt"));
     assert!(!is_jwt_format("header.payload"));
     assert!(!is_jwt_format("header.payload.signature.extra"));
     assert!(!is_jwt_format(""));
 }
 
-/// # Requirements: F18
 #[test]
 fn test_validate_jwt_token_invalid_format() {
     // Precondition: Token is not in JWT format
     // Action: Validate JWT token
     // Expected behavior: Returns InvalidFormat error
+    // Covers Requirements: F18
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     assert_eq!(
         validate_jwt_token("not-a-jwt", &jwt_keys),
@@ -100,12 +99,12 @@ fn test_validate_jwt_token_invalid_format() {
     );
 }
 
-/// # Requirements: F19
 #[test]
 fn test_validate_jwt_token_invalid_algorithm() {
     // Precondition: JWT token with unsupported algorithm (not HS256)
     // Action: Validate JWT token
     // Expected behavior: Returns InvalidAlgorithm error
+    // Covers Requirements: F19
     // Note: We create a token with RS256 algorithm - the header will contain RS256
     // and our validation will catch it before signature verification
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
@@ -133,12 +132,12 @@ fn test_validate_jwt_token_invalid_algorithm() {
     // If we can't create the token, the test is skipped (acceptable)
 }
 
-/// # Requirements: F19
 #[test]
 fn test_validate_jwt_token_valid_algorithm() {
     // Precondition: JWT token with HS256 algorithm
     // Action: Validate JWT token
     // Expected behavior: Token is accepted (if other validations pass)
+    // Covers Requirements: F19
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600;
@@ -146,12 +145,12 @@ fn test_validate_jwt_token_valid_algorithm() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F20
 #[test]
 fn test_validate_jwt_token_missing_type() {
     // Precondition: JWT token without typ field
     // Action: Validate JWT token
     // Expected behavior: Returns InvalidType error
+    // Covers Requirements: F20
     // Note: jsonwebtoken library may automatically add typ, so we test with invalid typ instead
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let mut header = Header::default();
@@ -176,12 +175,12 @@ fn test_validate_jwt_token_missing_type() {
     }
 }
 
-/// # Requirements: F20
 #[test]
 fn test_validate_jwt_token_invalid_type() {
     // Precondition: JWT token with typ != "JWT"
     // Action: Validate JWT token
     // Expected behavior: Returns InvalidType error
+    // Covers Requirements: F20
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let mut header = Header::default();
     header.alg = Algorithm::HS256;
@@ -196,12 +195,12 @@ fn test_validate_jwt_token_invalid_type() {
     );
 }
 
-/// # Requirements: F20
 #[test]
 fn test_validate_jwt_token_valid_type() {
     // Precondition: JWT token with typ = "JWT"
     // Action: Validate JWT token
     // Expected behavior: Token is accepted (if other validations pass)
+    // Covers Requirements: F20
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600;
@@ -209,12 +208,12 @@ fn test_validate_jwt_token_valid_type() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_missing_kid() {
     // Precondition: JWT token without kid field
     // Action: Validate JWT token
     // Expected behavior: Returns MissingKid error
+    // Covers Requirements: F21
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let mut header = Header::default();
     header.alg = Algorithm::HS256;
@@ -229,12 +228,12 @@ fn test_validate_jwt_token_missing_kid() {
     );
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_empty_kid() {
     // Precondition: JWT token with empty kid field
     // Action: Validate JWT token
     // Expected behavior: Returns MissingKid error
+    // Covers Requirements: F21
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let mut header = Header::default();
     header.alg = Algorithm::HS256;
@@ -249,12 +248,12 @@ fn test_validate_jwt_token_empty_kid() {
     );
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_invalid_kid() {
     // Precondition: JWT token with kid that doesn't match any configured JWT key ID
     // Action: Validate JWT token
     // Expected behavior: Returns InvalidKid error
+    // Covers Requirements: F21
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600;
@@ -265,12 +264,12 @@ fn test_validate_jwt_token_invalid_kid() {
     );
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_valid_kid() {
     // Precondition: JWT token with valid kid that matches configured JWT key ID
     // Action: Validate JWT token
     // Expected behavior: Token is accepted (if other validations pass)
+    // Covers Requirements: F21
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600;
@@ -278,12 +277,12 @@ fn test_validate_jwt_token_valid_kid() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F22
 #[test]
 fn test_validate_jwt_token_invalid_signature() {
     // Precondition: JWT token with invalid signature (wrong key)
     // Action: Validate JWT token
     // Expected behavior: Returns InvalidSignature error
+    // Covers Requirements: F22
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600;
@@ -294,12 +293,12 @@ fn test_validate_jwt_token_invalid_signature() {
     );
 }
 
-/// # Requirements: F22
 #[test]
 fn test_validate_jwt_token_valid_signature() {
     // Precondition: JWT token with valid signature
     // Action: Validate JWT token
     // Expected behavior: Token is accepted (if other validations pass)
+    // Covers Requirements: F22
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600;
@@ -307,12 +306,12 @@ fn test_validate_jwt_token_valid_signature() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_expired() {
     // Precondition: JWT token with exp claim in the past
     // Action: Validate JWT token
     // Expected behavior: Returns Expired error
+    // Covers Requirements: F23
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now - 3600; // 1 hour ago (expired)
@@ -323,12 +322,12 @@ fn test_validate_jwt_token_expired() {
     );
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_not_expired() {
     // Precondition: JWT token with exp claim in the future
     // Action: Validate JWT token
     // Expected behavior: Token is accepted (if other validations pass)
+    // Covers Requirements: F23
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600; // 1 hour from now
@@ -336,12 +335,12 @@ fn test_validate_jwt_token_not_expired() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_without_exp() {
     // Precondition: JWT token without exp claim
     // Action: Validate JWT token
     // Expected behavior: Token is accepted (exp is optional)
+    // Covers Requirements: F23
     // Note: Use create_test_jwt which properly creates tokens
     // Add exp in the future to ensure token is valid, but test that exp validation is optional
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
@@ -369,12 +368,12 @@ fn test_validate_jwt_token_without_exp() {
     }
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_not_yet_valid() {
     // Precondition: JWT token with nbf claim in the future
     // Action: Validate JWT token
     // Expected behavior: Returns NotYetValid error
+    // Covers Requirements: F24
     // Note: Use create_test_jwt which properly creates tokens
     // Add exp to ensure token signature is valid, but nbf should still be checked
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
@@ -388,12 +387,12 @@ fn test_validate_jwt_token_not_yet_valid() {
     );
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_valid_nbf() {
     // Precondition: JWT token with nbf claim in the past
     // Action: Validate JWT token
     // Expected behavior: Token is accepted (if other validations pass)
+    // Covers Requirements: F24
     // Note: Use create_test_jwt which properly creates tokens
     // Add exp to ensure token signature is valid
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
@@ -404,12 +403,12 @@ fn test_validate_jwt_token_valid_nbf() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_without_nbf() {
     // Precondition: JWT token without nbf claim
     // Action: Validate JWT token
     // Expected behavior: Token is accepted (nbf is optional)
+    // Covers Requirements: F24
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     // Create token with exp but no nbf
     let now = current_timestamp();
@@ -418,12 +417,12 @@ fn test_validate_jwt_token_without_nbf() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F23, F24
 #[test]
 fn test_validate_jwt_token_with_both_exp_and_nbf() {
     // Precondition: JWT token with both exp and nbf claims
     // Action: Validate JWT token
     // Expected behavior: Token is accepted if both are valid
+    // Covers Requirements: F23, F24
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600; // 1 hour from now
@@ -432,12 +431,12 @@ fn test_validate_jwt_token_with_both_exp_and_nbf() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F17.1
 #[test]
 fn test_authenticate_static_key_first() {
     // Precondition: Config with both static and JWT keys, token matches static key
     // Action: Authenticate token
     // Expected behavior: Static key is used (checked first)
+    // Covers Requirements: F17.1
     let static_key = StaticApiKey {
         id: Some("static-key".to_string()),
         key: "static-secret".to_string(),
@@ -462,12 +461,12 @@ fn test_authenticate_static_key_first() {
     assert_eq!(result.unwrap().api_key, Some("static-key".to_string()));
 }
 
-/// # Requirements: F17.1
 #[test]
 fn test_authenticate_jwt_after_static_fails() {
     // Precondition: Config with both static and JWT keys, token doesn't match static but is valid JWT
     // Action: Authenticate token
     // Expected behavior: JWT token is validated and accepted
+    // Covers Requirements: F17.1
     let static_key = StaticApiKey {
         id: Some("static-key".to_string()),
         key: "static-secret".to_string(),
@@ -495,12 +494,12 @@ fn test_authenticate_jwt_after_static_fails() {
     assert_eq!(result.unwrap().api_key, Some("jwt-key".to_string()));
 }
 
-/// # Requirements: F17.1
 #[test]
 fn test_authenticate_non_jwt_format_after_static_fails() {
     // Precondition: Config with static keys, token doesn't match static and is not JWT format
     // Action: Authenticate token
     // Expected behavior: Authentication fails (not static, not JWT format)
+    // Covers Requirements: F17.1
     let static_key = StaticApiKey {
         id: Some("static-key".to_string()),
         key: "static-secret".to_string(),
@@ -520,12 +519,12 @@ fn test_authenticate_non_jwt_format_after_static_fails() {
     assert!(result.is_none());
 }
 
-/// # Requirements: F3
 #[test]
 fn test_authenticate_jwt_has_access_to_all_upstreams() {
     // Precondition: Config with JWT keys and multiple upstreams
     // Action: Authenticate valid JWT token
     // Expected behavior: JWT token has access to all configured upstreams
+    // Covers Requirements: F3
     let jwt_key = test_jwt_key("jwt-key", "jwt-secret");
     let config = test_config(
         Some(test_upstreams_config(
@@ -558,12 +557,12 @@ fn test_authenticate_jwt_has_access_to_all_upstreams() {
         .contains(&"upstream2".to_string()));
 }
 
-/// # Requirements: C16.1
 #[test]
 fn test_validate_config_jwt_id_required() {
     // Precondition: Config with JWT key missing id
     // Action: Validate configuration
     // Expected behavior: Validation fails with error about missing id
+    // Covers Requirements: C16.1
     let jwt_key = JwtApiKey {
         id: "".to_string(), // Empty id
         key: "secret-key".to_string(),
@@ -583,12 +582,12 @@ fn test_validate_config_jwt_id_required() {
         .any(|r| r.contains("api_keys.jwt[0].id must not be empty")));
 }
 
-/// # Requirements: C16.1
 #[test]
 fn test_validate_config_jwt_id_unique() {
     // Precondition: Config with duplicate JWT ids
     // Action: Validate configuration
     // Expected behavior: Validation fails with error about duplicate ids
+    // Covers Requirements: C16.1
     let jwt_key1 = test_jwt_key("dev", "secret-key1");
     let jwt_key2 = test_jwt_key("dev", "secret-key2"); // Duplicate id
     let config = Config {
@@ -609,12 +608,12 @@ fn test_validate_config_jwt_id_unique() {
         .any(|r| r.contains("api_keys.jwt[1].id 'dev' is not unique")));
 }
 
-/// # Requirements: C16.1
 #[test]
 fn test_validate_config_jwt_id_valid() {
     // Precondition: Config with valid unique JWT ids
     // Action: Validate configuration
     // Expected behavior: Validation succeeds
+    // Covers Requirements: C16.1
     let jwt_key1 = test_jwt_key("dev", "secret-key1");
     let jwt_key2 = test_jwt_key("test", "secret-key2");
     let config = Config {
@@ -630,12 +629,12 @@ fn test_validate_config_jwt_id_valid() {
     assert!(result.is_ok());
 }
 
-/// # Requirements: C16.2
 #[test]
 fn test_validate_config_jwt_key_required() {
     // Precondition: Config with JWT key missing key
     // Action: Validate configuration
     // Expected behavior: Validation fails with error about missing key
+    // Covers Requirements: C16.2
     let jwt_key = JwtApiKey {
         id: "dev".to_string(),
         key: "".to_string(), // Empty key
@@ -655,12 +654,12 @@ fn test_validate_config_jwt_key_required() {
         .any(|r| r.contains("api_keys.jwt[0].key must not be empty")));
 }
 
-/// # Requirements: C16.2
 #[test]
 fn test_validate_config_jwt_key_can_be_duplicated() {
     // Precondition: Config with duplicate JWT keys (same key, different ids)
     // Action: Validate configuration
     // Expected behavior: Validation succeeds (JWT keys can be duplicated)
+    // Covers Requirements: C16.2
     let jwt_key1 = test_jwt_key("dev", "same-secret");
     let jwt_key2 = test_jwt_key("test", "same-secret"); // Same key, different id
     let config = Config {
@@ -676,12 +675,12 @@ fn test_validate_config_jwt_key_can_be_duplicated() {
     assert!(result.is_ok());
 }
 
-/// # Requirements: C16.2
 #[test]
 fn test_validate_config_jwt_key_can_match_static_key() {
     // Precondition: Config with JWT key matching static key value
     // Action: Validate configuration
     // Expected behavior: Validation succeeds (no conflict, static checked first)
+    // Covers Requirements: C16.2
     let static_key = StaticApiKey {
         id: Some("static-key".to_string()),
         key: "shared-secret".to_string(),
@@ -701,12 +700,12 @@ fn test_validate_config_jwt_key_can_match_static_key() {
     assert!(result.is_ok());
 }
 
-/// # Requirements: F17.1, F18-F24
 #[test]
 fn test_authenticate_valid_jwt_token() {
     // Precondition: Config with JWT keys, valid JWT token
     // Action: Authenticate token
     // Expected behavior: Authentication succeeds, returns JWT key id
+    // Covers Requirements: F17.1, F18-F24
     let jwt_key = test_jwt_key("dev", "secret-key");
     let config = test_config(
         Some(test_upstreams_config(
@@ -726,12 +725,12 @@ fn test_authenticate_valid_jwt_token() {
     assert_eq!(result.unwrap().api_key, Some("dev".to_string()));
 }
 
-/// # Requirements: F17.1, F18-F24
 #[test]
 fn test_authenticate_invalid_jwt_token() {
     // Precondition: Config with JWT keys, invalid JWT token
     // Action: Authenticate token
     // Expected behavior: Authentication fails
+    // Covers Requirements: F17.1, F18-F24
     let jwt_key = test_jwt_key("dev", "secret-key");
     let config = test_config(
         Some(test_upstreams_config(
@@ -750,12 +749,12 @@ fn test_authenticate_invalid_jwt_token() {
     assert!(result.is_none());
 }
 
-/// # Requirements: F17.1
 #[test]
 fn test_authenticate_empty_jwt_list() {
     // Precondition: Config with empty JWT list
     // Action: Authenticate JWT format token
     // Expected behavior: Authentication fails (no JWT keys configured)
+    // Covers Requirements: F17.1
     let config = test_config(
         Some(test_upstreams_config(
             5000,
@@ -773,12 +772,12 @@ fn test_authenticate_empty_jwt_list() {
     assert!(result.is_none());
 }
 
-/// # Requirements: F17.1
 #[test]
 fn test_authenticate_no_jwt_config() {
     // Precondition: Config without JWT keys
     // Action: Authenticate JWT format token
     // Expected behavior: Authentication fails (no JWT keys configured)
+    // Covers Requirements: F17.1
     let config = test_config(
         Some(test_upstreams_config(
             5000,
@@ -796,12 +795,12 @@ fn test_authenticate_no_jwt_config() {
     assert!(result.is_none());
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_multiple_keys() {
     // Precondition: Config with multiple JWT keys, token with valid kid
     // Action: Validate JWT token
     // Expected behavior: Correct key is selected based on kid
+    // Covers Requirements: F21
     let jwt_keys = vec![
         ("dev".to_string(), "dev-secret".to_string()),
         ("test".to_string(), "test-secret".to_string()),
@@ -815,12 +814,12 @@ fn test_validate_jwt_token_multiple_keys() {
     );
 }
 
-/// # Requirements: F22
 #[test]
 fn test_validate_jwt_token_wrong_key_for_kid() {
     // Precondition: JWT token with valid kid but wrong key
     // Action: Validate JWT token
     // Expected behavior: Returns InvalidSignature error
+    // Covers Requirements: F22
     let jwt_keys = vec![("dev".to_string(), "correct-secret".to_string())];
     let now = current_timestamp();
     let exp = now + 3600;
@@ -831,12 +830,12 @@ fn test_validate_jwt_token_wrong_key_for_kid() {
     );
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_exp_at_boundary() {
     // Precondition: JWT token with exp exactly at current time
     // Action: Validate JWT token
     // Expected behavior: Returns Expired error (current time >= exp)
+    // Covers Requirements: F23
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now; // Exactly now
@@ -847,12 +846,12 @@ fn test_validate_jwt_token_exp_at_boundary() {
     );
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_nbf_at_boundary() {
     // Precondition: JWT token with nbf exactly at current time
     // Action: Validate JWT token
     // Expected behavior: Token is accepted (current time >= nbf)
+    // Covers Requirements: F24
     // Note: Use create_test_jwt which properly creates tokens
     // Add exp to ensure token signature is valid
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
@@ -863,12 +862,12 @@ fn test_validate_jwt_token_nbf_at_boundary() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F17.1
 #[test]
 fn test_authenticate_static_key_priority_over_jwt() {
     // Precondition: Token matches both static key and could be JWT format
     // Action: Authenticate token
     // Expected behavior: Static key is used (checked first)
+    // Covers Requirements: F17.1
     let static_key = StaticApiKey {
         id: Some("static-key".to_string()),
         key: "header.payload.signature".to_string(), // Looks like JWT format
@@ -893,12 +892,12 @@ fn test_authenticate_static_key_priority_over_jwt() {
     assert_eq!(result.unwrap().api_key, Some("static-key".to_string()));
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_not_yet_valid_nbf_only() {
     // Precondition: JWT token with nbf claim in the future, no exp claim
     // Action: Validate JWT token
     // Expected behavior: Returns NotYetValid error
+    // Covers Requirements: F24
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let nbf = now + 3600; // 1 hour from now (not yet valid)
@@ -911,12 +910,12 @@ fn test_validate_jwt_token_not_yet_valid_nbf_only() {
     );
 }
 
-/// # Requirements: F23, F24
 #[test]
 fn test_validate_jwt_token_both_exp_and_nbf_valid() {
     // Precondition: JWT token with both exp and nbf claims, both valid
     // Action: Validate JWT token
     // Expected behavior: Token is accepted
+    // Covers Requirements: F23, F24
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let nbf = now - 60; // Valid 60 seconds ago
@@ -925,12 +924,12 @@ fn test_validate_jwt_token_both_exp_and_nbf_valid() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F18, F22
 #[test]
 fn test_validate_jwt_token_without_exp_and_nbf_claims() {
     // Precondition: JWT token without exp and nbf claims
     // Action: Validate JWT token
     // Expected behavior: Token is accepted based on signature validation only
+    // Covers Requirements: F18, F22
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let mut header = Header::default();
     header.alg = Algorithm::HS256;
@@ -946,30 +945,30 @@ fn test_validate_jwt_token_without_exp_and_nbf_claims() {
     }
 }
 
-/// # Requirements: F18
 #[test]
 fn test_is_jwt_format_malformed_two_parts() {
     // Precondition: Token with only two parts (not JWT format)
     // Action: Check if token matches JWT format
     // Expected behavior: Returns false
+    // Covers Requirements: F18
     assert!(!is_jwt_format("header.payload"));
 }
 
-/// # Requirements: F18
 #[test]
 fn test_is_jwt_format_malformed_four_parts() {
     // Precondition: Token with four parts (not JWT format)
     // Action: Check if token matches JWT format
     // Expected behavior: Returns false
+    // Covers Requirements: F18
     assert!(!is_jwt_format("header.payload.signature.extra"));
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_invalid_kid_not_in_config() {
     // Precondition: JWT token with kid not matching any configured key ID
     // Action: Validate JWT token
     // Expected behavior: Returns InvalidKid error
+    // Covers Requirements: F21
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600;
@@ -986,12 +985,12 @@ fn test_validate_jwt_token_invalid_kid_not_in_config() {
     );
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_empty_kid_string() {
     // Precondition: JWT token with empty kid
     // Action: Validate JWT token
     // Expected behavior: Returns MissingKid error
+    // Covers Requirements: F21
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600;
@@ -1002,12 +1001,12 @@ fn test_validate_jwt_token_empty_kid_string() {
     );
 }
 
-/// # Requirements: F21, F22
 #[test]
 fn test_validate_jwt_token_multiple_keys_selects_correct_one() {
     // Precondition: Multiple JWT keys configured, JWT tokens created with different kid values
     // Action: Validate JWT tokens with different kid values
     // Expected behavior: Each token authenticated with correct key based on kid
+    // Covers Requirements: F21, F22
     let jwt_keys = vec![
         ("key1".to_string(), "secret1".to_string()),
         ("key2".to_string(), "secret2".to_string()),
@@ -1030,12 +1029,12 @@ fn test_validate_jwt_token_multiple_keys_selects_correct_one() {
     );
 }
 
-/// # Requirements: F23, F24
 #[test]
 fn test_validate_jwt_token_expired_exp_with_valid_nbf() {
     // Precondition: JWT token with expired exp but valid nbf
     // Action: Validate JWT token
     // Expected behavior: Returns Expired error (exp checked first)
+    // Covers Requirements: F23, F24
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now - 60; // Expired 60 seconds ago
@@ -1047,12 +1046,12 @@ fn test_validate_jwt_token_expired_exp_with_valid_nbf() {
     );
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_valid_exp_but_not_yet_valid_nbf() {
     // Precondition: JWT token with valid exp but nbf in the future
     // Action: Validate JWT token
     // Expected behavior: Returns NotYetValid error
+    // Covers Requirements: F24
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600; // Valid for 1 hour
@@ -1064,12 +1063,12 @@ fn test_validate_jwt_token_valid_exp_but_not_yet_valid_nbf() {
     );
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_exp_at_current_time_boundary() {
     // Precondition: JWT token with exp exactly at current time
     // Action: Validate JWT token
     // Expected behavior: Returns Expired error (expired at boundary)
+    // Covers Requirements: F23
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let exp = current_timestamp(); // Exactly at current time
     let token = create_test_jwt("dev", "secret-key", Some(exp), None, Algorithm::HS256);
@@ -1079,12 +1078,12 @@ fn test_validate_jwt_token_exp_at_current_time_boundary() {
     );
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_nbf_at_current_time_boundary() {
     // Precondition: JWT token with nbf exactly at current time
     // Action: Validate JWT token
     // Expected behavior: Token is accepted (nbf is valid at boundary)
+    // Covers Requirements: F24
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let nbf = now; // Exactly at current time
@@ -1093,12 +1092,12 @@ fn test_validate_jwt_token_nbf_at_current_time_boundary() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_very_long_expiration() {
     // Precondition: JWT token with very long expiration time (1 year)
     // Action: Validate JWT token
     // Expected behavior: Token is accepted
+    // Covers Requirements: F23
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 31536000; // Valid for 1 year
@@ -1106,12 +1105,12 @@ fn test_validate_jwt_token_very_long_expiration() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_very_short_expiration() {
     // Precondition: JWT token with very short expiration time (1 second)
     // Action: Validate JWT token
     // Expected behavior: Token is accepted if not expired yet
+    // Covers Requirements: F23
     let jwt_keys = vec![("dev".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 1; // Valid for only 1 second
@@ -1119,12 +1118,12 @@ fn test_validate_jwt_token_very_short_expiration() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_special_characters_in_kid() {
     // Precondition: JWT token with special characters in kid
     // Action: Validate JWT token
     // Expected behavior: Token is accepted, kid matched correctly
+    // Covers Requirements: F21
     let jwt_keys = vec![("test-key-!@#$%".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600;
@@ -1141,12 +1140,12 @@ fn test_validate_jwt_token_special_characters_in_kid() {
     );
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_unicode_in_kid() {
     // Precondition: JWT token with unicode characters in kid
     // Action: Validate JWT token
     // Expected behavior: Token is accepted, kid matched correctly
+    // Covers Requirements: F21
     let jwt_keys = vec![("test-key-ключ-🔑".to_string(), "secret-key".to_string())];
     let now = current_timestamp();
     let exp = now + 3600;
@@ -1163,12 +1162,12 @@ fn test_validate_jwt_token_unicode_in_kid() {
     );
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_very_long_kid() {
     // Precondition: JWT token with very long kid (256 chars)
     // Action: Validate JWT token
     // Expected behavior: Token is accepted, kid matched correctly
+    // Covers Requirements: F21
     let long_kid = "a".repeat(256);
     let jwt_keys = vec![(long_kid.clone(), "secret-key".to_string())];
     let now = current_timestamp();
@@ -1177,12 +1176,12 @@ fn test_validate_jwt_token_very_long_kid() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok(long_kid));
 }
 
-/// # Requirements: F22
 #[test]
 fn test_validate_jwt_token_very_long_secret() {
     // Precondition: JWT token signed with very long secret (512 chars)
     // Action: Validate JWT token
     // Expected behavior: Token is accepted, signature verified correctly
+    // Covers Requirements: F22
     let long_secret = "a".repeat(512);
     let jwt_keys = vec![("dev".to_string(), long_secret.clone())];
     let now = current_timestamp();
@@ -1191,12 +1190,12 @@ fn test_validate_jwt_token_very_long_secret() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F18, F22
 #[test]
 fn test_validate_jwt_token_correct_kid_but_wrong_key() {
     // Precondition: JWT token with correct kid but wrong secret key
     // Action: Validate JWT token
     // Expected behavior: Returns InvalidSignature error
+    // Covers Requirements: F18, F22
     let jwt_keys = vec![("dev".to_string(), "correct-secret".to_string())];
     let now = current_timestamp();
     let exp = now + 3600;
@@ -1208,12 +1207,12 @@ fn test_validate_jwt_token_correct_kid_but_wrong_key() {
     );
 }
 
-/// # Requirements: F17.1, F18-F24
 #[test]
 fn test_authenticate_without_static_section_proxy_works() {
     // Precondition: Config with api_keys containing only JWT (no static section)
     // Action: Authenticate with static key and JWT token
     // Expected behavior: Static keys don't work (return None), but proxy still works (JWT should work)
+    // Covers Requirements: F17.1, F18-F24
     let jwt_key = test_jwt_key("jwt-key", "jwt-secret");
     let config = test_config(
         Some(test_upstreams_config(
@@ -1257,12 +1256,12 @@ fn test_authenticate_without_static_section_proxy_works() {
     );
 }
 
-/// # Requirements: F17.1, F18-F24
 #[test]
 fn test_authenticate_jwt_works_without_static_section() {
     // Precondition: Config with api_keys containing only JWT (no static section), with multiple upstreams
     // Action: Authenticate valid JWT token
     // Expected behavior: JWT authentication succeeds and provides access to all upstreams
+    // Covers Requirements: F17.1, F18-F24
     let jwt_key = test_jwt_key("jwt-key", "jwt-secret");
     let config = test_config(
         Some(test_upstreams_config(
