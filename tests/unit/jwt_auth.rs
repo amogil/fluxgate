@@ -62,8 +62,6 @@ fn current_timestamp() -> i64 {
         .as_secs() as i64
 }
 
-/// # Requirements: F18
-/// Test that is_jwt_format correctly identifies JWT format tokens
 #[test]
 fn test_is_jwt_format_valid() {
     // Precondition: Valid JWT format has three parts separated by dots
@@ -76,7 +74,6 @@ fn test_is_jwt_format_valid() {
     ));
 }
 
-/// # Requirements: F18
 #[test]
 fn test_is_jwt_format_invalid() {
     // Precondition: Invalid formats
@@ -89,7 +86,6 @@ fn test_is_jwt_format_invalid() {
     assert!(!is_jwt_format(""));
 }
 
-/// # Requirements: F18
 #[test]
 fn test_validate_jwt_token_invalid_format() {
     // Precondition: Token is not in JWT format
@@ -103,7 +99,6 @@ fn test_validate_jwt_token_invalid_format() {
     );
 }
 
-/// # Requirements: F19
 #[test]
 fn test_validate_jwt_token_invalid_algorithm() {
     // Precondition: JWT token with unsupported algorithm (not HS256)
@@ -137,7 +132,6 @@ fn test_validate_jwt_token_invalid_algorithm() {
     // If we can't create the token, the test is skipped (acceptable)
 }
 
-/// # Requirements: F19
 #[test]
 fn test_validate_jwt_token_valid_algorithm() {
     // Precondition: JWT token with HS256 algorithm
@@ -151,7 +145,6 @@ fn test_validate_jwt_token_valid_algorithm() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F20
 #[test]
 fn test_validate_jwt_token_missing_type() {
     // Precondition: JWT token without typ field
@@ -182,7 +175,6 @@ fn test_validate_jwt_token_missing_type() {
     }
 }
 
-/// # Requirements: F20
 #[test]
 fn test_validate_jwt_token_invalid_type() {
     // Precondition: JWT token with typ != "JWT"
@@ -203,7 +195,6 @@ fn test_validate_jwt_token_invalid_type() {
     );
 }
 
-/// # Requirements: F20
 #[test]
 fn test_validate_jwt_token_valid_type() {
     // Precondition: JWT token with typ = "JWT"
@@ -217,7 +208,6 @@ fn test_validate_jwt_token_valid_type() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_missing_kid() {
     // Precondition: JWT token without kid field
@@ -238,7 +228,6 @@ fn test_validate_jwt_token_missing_kid() {
     );
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_empty_kid() {
     // Precondition: JWT token with empty kid field
@@ -259,7 +248,6 @@ fn test_validate_jwt_token_empty_kid() {
     );
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_invalid_kid() {
     // Precondition: JWT token with kid that doesn't match any configured JWT key ID
@@ -276,7 +264,6 @@ fn test_validate_jwt_token_invalid_kid() {
     );
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_valid_kid() {
     // Precondition: JWT token with valid kid that matches configured JWT key ID
@@ -290,7 +277,6 @@ fn test_validate_jwt_token_valid_kid() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F22
 #[test]
 fn test_validate_jwt_token_invalid_signature() {
     // Precondition: JWT token with invalid signature (wrong key)
@@ -307,7 +293,6 @@ fn test_validate_jwt_token_invalid_signature() {
     );
 }
 
-/// # Requirements: F22
 #[test]
 fn test_validate_jwt_token_valid_signature() {
     // Precondition: JWT token with valid signature
@@ -321,7 +306,6 @@ fn test_validate_jwt_token_valid_signature() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_expired() {
     // Precondition: JWT token with exp claim in the past
@@ -338,7 +322,6 @@ fn test_validate_jwt_token_expired() {
     );
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_not_expired() {
     // Precondition: JWT token with exp claim in the future
@@ -352,7 +335,6 @@ fn test_validate_jwt_token_not_expired() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_without_exp() {
     // Precondition: JWT token without exp claim
@@ -386,7 +368,6 @@ fn test_validate_jwt_token_without_exp() {
     }
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_not_yet_valid() {
     // Precondition: JWT token with nbf claim in the future
@@ -406,7 +387,6 @@ fn test_validate_jwt_token_not_yet_valid() {
     );
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_valid_nbf() {
     // Precondition: JWT token with nbf claim in the past
@@ -423,7 +403,6 @@ fn test_validate_jwt_token_valid_nbf() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_without_nbf() {
     // Precondition: JWT token without nbf claim
@@ -438,7 +417,6 @@ fn test_validate_jwt_token_without_nbf() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F23, F24
 #[test]
 fn test_validate_jwt_token_with_both_exp_and_nbf() {
     // Precondition: JWT token with both exp and nbf claims
@@ -453,7 +431,6 @@ fn test_validate_jwt_token_with_both_exp_and_nbf() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F17.1
 #[test]
 fn test_authenticate_static_key_first() {
     // Precondition: Config with both static and JWT keys, token matches static key
@@ -484,7 +461,6 @@ fn test_authenticate_static_key_first() {
     assert_eq!(result.unwrap().api_key, Some("static-key".to_string()));
 }
 
-/// # Requirements: F17.1
 #[test]
 fn test_authenticate_jwt_after_static_fails() {
     // Precondition: Config with both static and JWT keys, token doesn't match static but is valid JWT
@@ -518,7 +494,6 @@ fn test_authenticate_jwt_after_static_fails() {
     assert_eq!(result.unwrap().api_key, Some("jwt-key".to_string()));
 }
 
-/// # Requirements: F17.1
 #[test]
 fn test_authenticate_non_jwt_format_after_static_fails() {
     // Precondition: Config with static keys, token doesn't match static and is not JWT format
@@ -544,7 +519,6 @@ fn test_authenticate_non_jwt_format_after_static_fails() {
     assert!(result.is_none());
 }
 
-/// # Requirements: F3
 #[test]
 fn test_authenticate_jwt_has_access_to_all_upstreams() {
     // Precondition: Config with JWT keys and multiple upstreams
@@ -583,7 +557,6 @@ fn test_authenticate_jwt_has_access_to_all_upstreams() {
         .contains(&"upstream2".to_string()));
 }
 
-/// # Requirements: C16.1
 #[test]
 fn test_validate_config_jwt_id_required() {
     // Precondition: Config with JWT key missing id
@@ -609,7 +582,6 @@ fn test_validate_config_jwt_id_required() {
         .any(|r| r.contains("api_keys.jwt[0].id must not be empty")));
 }
 
-/// # Requirements: C16.1
 #[test]
 fn test_validate_config_jwt_id_unique() {
     // Precondition: Config with duplicate JWT ids
@@ -636,7 +608,6 @@ fn test_validate_config_jwt_id_unique() {
         .any(|r| r.contains("api_keys.jwt[1].id 'dev' is not unique")));
 }
 
-/// # Requirements: C16.1
 #[test]
 fn test_validate_config_jwt_id_valid() {
     // Precondition: Config with valid unique JWT ids
@@ -658,7 +629,6 @@ fn test_validate_config_jwt_id_valid() {
     assert!(result.is_ok());
 }
 
-/// # Requirements: C16.2
 #[test]
 fn test_validate_config_jwt_key_required() {
     // Precondition: Config with JWT key missing key
@@ -684,7 +654,6 @@ fn test_validate_config_jwt_key_required() {
         .any(|r| r.contains("api_keys.jwt[0].key must not be empty")));
 }
 
-/// # Requirements: C16.2
 #[test]
 fn test_validate_config_jwt_key_can_be_duplicated() {
     // Precondition: Config with duplicate JWT keys (same key, different ids)
@@ -706,7 +675,6 @@ fn test_validate_config_jwt_key_can_be_duplicated() {
     assert!(result.is_ok());
 }
 
-/// # Requirements: C16.2
 #[test]
 fn test_validate_config_jwt_key_can_match_static_key() {
     // Precondition: Config with JWT key matching static key value
@@ -732,7 +700,6 @@ fn test_validate_config_jwt_key_can_match_static_key() {
     assert!(result.is_ok());
 }
 
-/// # Requirements: F17.1, F18-F24
 #[test]
 fn test_authenticate_valid_jwt_token() {
     // Precondition: Config with JWT keys, valid JWT token
@@ -758,7 +725,6 @@ fn test_authenticate_valid_jwt_token() {
     assert_eq!(result.unwrap().api_key, Some("dev".to_string()));
 }
 
-/// # Requirements: F17.1, F18-F24
 #[test]
 fn test_authenticate_invalid_jwt_token() {
     // Precondition: Config with JWT keys, invalid JWT token
@@ -783,7 +749,6 @@ fn test_authenticate_invalid_jwt_token() {
     assert!(result.is_none());
 }
 
-/// # Requirements: F17.1
 #[test]
 fn test_authenticate_empty_jwt_list() {
     // Precondition: Config with empty JWT list
@@ -807,7 +772,6 @@ fn test_authenticate_empty_jwt_list() {
     assert!(result.is_none());
 }
 
-/// # Requirements: F17.1
 #[test]
 fn test_authenticate_no_jwt_config() {
     // Precondition: Config without JWT keys
@@ -831,7 +795,6 @@ fn test_authenticate_no_jwt_config() {
     assert!(result.is_none());
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_multiple_keys() {
     // Precondition: Config with multiple JWT keys, token with valid kid
@@ -851,7 +814,6 @@ fn test_validate_jwt_token_multiple_keys() {
     );
 }
 
-/// # Requirements: F22
 #[test]
 fn test_validate_jwt_token_wrong_key_for_kid() {
     // Precondition: JWT token with valid kid but wrong key
@@ -868,7 +830,6 @@ fn test_validate_jwt_token_wrong_key_for_kid() {
     );
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_exp_at_boundary() {
     // Precondition: JWT token with exp exactly at current time
@@ -885,7 +846,6 @@ fn test_validate_jwt_token_exp_at_boundary() {
     );
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_nbf_at_boundary() {
     // Precondition: JWT token with nbf exactly at current time
@@ -902,7 +862,6 @@ fn test_validate_jwt_token_nbf_at_boundary() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F17.1
 #[test]
 fn test_authenticate_static_key_priority_over_jwt() {
     // Precondition: Token matches both static key and could be JWT format
@@ -933,7 +892,6 @@ fn test_authenticate_static_key_priority_over_jwt() {
     assert_eq!(result.unwrap().api_key, Some("static-key".to_string()));
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_not_yet_valid_nbf_only() {
     // Precondition: JWT token with nbf claim in the future, no exp claim
@@ -952,7 +910,6 @@ fn test_validate_jwt_token_not_yet_valid_nbf_only() {
     );
 }
 
-/// # Requirements: F23, F24
 #[test]
 fn test_validate_jwt_token_both_exp_and_nbf_valid() {
     // Precondition: JWT token with both exp and nbf claims, both valid
@@ -967,7 +924,6 @@ fn test_validate_jwt_token_both_exp_and_nbf_valid() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F18, F22
 #[test]
 fn test_validate_jwt_token_without_exp_and_nbf_claims() {
     // Precondition: JWT token without exp and nbf claims
@@ -989,7 +945,6 @@ fn test_validate_jwt_token_without_exp_and_nbf_claims() {
     }
 }
 
-/// # Requirements: F18
 #[test]
 fn test_is_jwt_format_malformed_two_parts() {
     // Precondition: Token with only two parts (not JWT format)
@@ -999,7 +954,6 @@ fn test_is_jwt_format_malformed_two_parts() {
     assert!(!is_jwt_format("header.payload"));
 }
 
-/// # Requirements: F18
 #[test]
 fn test_is_jwt_format_malformed_four_parts() {
     // Precondition: Token with four parts (not JWT format)
@@ -1009,7 +963,6 @@ fn test_is_jwt_format_malformed_four_parts() {
     assert!(!is_jwt_format("header.payload.signature.extra"));
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_invalid_kid_not_in_config() {
     // Precondition: JWT token with kid not matching any configured key ID
@@ -1032,7 +985,6 @@ fn test_validate_jwt_token_invalid_kid_not_in_config() {
     );
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_empty_kid_string() {
     // Precondition: JWT token with empty kid
@@ -1049,7 +1001,6 @@ fn test_validate_jwt_token_empty_kid_string() {
     );
 }
 
-/// # Requirements: F21, F22
 #[test]
 fn test_validate_jwt_token_multiple_keys_selects_correct_one() {
     // Precondition: Multiple JWT keys configured, JWT tokens created with different kid values
@@ -1078,7 +1029,6 @@ fn test_validate_jwt_token_multiple_keys_selects_correct_one() {
     );
 }
 
-/// # Requirements: F23, F24
 #[test]
 fn test_validate_jwt_token_expired_exp_with_valid_nbf() {
     // Precondition: JWT token with expired exp but valid nbf
@@ -1096,7 +1046,6 @@ fn test_validate_jwt_token_expired_exp_with_valid_nbf() {
     );
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_valid_exp_but_not_yet_valid_nbf() {
     // Precondition: JWT token with valid exp but nbf in the future
@@ -1114,7 +1063,6 @@ fn test_validate_jwt_token_valid_exp_but_not_yet_valid_nbf() {
     );
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_exp_at_current_time_boundary() {
     // Precondition: JWT token with exp exactly at current time
@@ -1130,7 +1078,6 @@ fn test_validate_jwt_token_exp_at_current_time_boundary() {
     );
 }
 
-/// # Requirements: F24
 #[test]
 fn test_validate_jwt_token_nbf_at_current_time_boundary() {
     // Precondition: JWT token with nbf exactly at current time
@@ -1145,7 +1092,6 @@ fn test_validate_jwt_token_nbf_at_current_time_boundary() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_very_long_expiration() {
     // Precondition: JWT token with very long expiration time (1 year)
@@ -1159,7 +1105,6 @@ fn test_validate_jwt_token_very_long_expiration() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F23
 #[test]
 fn test_validate_jwt_token_very_short_expiration() {
     // Precondition: JWT token with very short expiration time (1 second)
@@ -1173,7 +1118,6 @@ fn test_validate_jwt_token_very_short_expiration() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_special_characters_in_kid() {
     // Precondition: JWT token with special characters in kid
@@ -1196,7 +1140,6 @@ fn test_validate_jwt_token_special_characters_in_kid() {
     );
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_unicode_in_kid() {
     // Precondition: JWT token with unicode characters in kid
@@ -1219,7 +1162,6 @@ fn test_validate_jwt_token_unicode_in_kid() {
     );
 }
 
-/// # Requirements: F21
 #[test]
 fn test_validate_jwt_token_very_long_kid() {
     // Precondition: JWT token with very long kid (256 chars)
@@ -1234,7 +1176,6 @@ fn test_validate_jwt_token_very_long_kid() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok(long_kid));
 }
 
-/// # Requirements: F22
 #[test]
 fn test_validate_jwt_token_very_long_secret() {
     // Precondition: JWT token signed with very long secret (512 chars)
@@ -1249,7 +1190,6 @@ fn test_validate_jwt_token_very_long_secret() {
     assert_eq!(validate_jwt_token(&token, &jwt_keys), Ok("dev".to_string()));
 }
 
-/// # Requirements: F18, F22
 #[test]
 fn test_validate_jwt_token_correct_kid_but_wrong_key() {
     // Precondition: JWT token with correct kid but wrong secret key
@@ -1267,7 +1207,6 @@ fn test_validate_jwt_token_correct_kid_but_wrong_key() {
     );
 }
 
-/// # Requirements: F17.1, F18-F24
 #[test]
 fn test_authenticate_without_static_section_proxy_works() {
     // Precondition: Config with api_keys containing only JWT (no static section)
@@ -1317,7 +1256,6 @@ fn test_authenticate_without_static_section_proxy_works() {
     );
 }
 
-/// # Requirements: F17.1, F18-F24
 #[test]
 fn test_authenticate_jwt_works_without_static_section() {
     // Precondition: Config with api_keys containing only JWT (no static section), with multiple upstreams
