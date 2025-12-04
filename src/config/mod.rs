@@ -475,6 +475,13 @@ impl Config {
                     // Requirement: C16.2 - Validate key is present and non-empty
                     if jwt_key.key.trim().is_empty() {
                         reasons.push(format!("api_keys.jwt[{}].key must not be empty", index));
+                    } else if jwt_key.key.len() < 32 {
+                        // Requirement: C16.3 - Validate key has minimum length of 32 bytes (RFC 7518)
+                        reasons.push(format!(
+                            "api_keys.jwt[{}].key must be at least 32 bytes (got {} bytes)",
+                            index,
+                            jwt_key.key.len()
+                        ));
                     }
                     // Note: JWT keys don't need to be unique (C16.2)
                 }

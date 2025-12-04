@@ -4841,9 +4841,9 @@ upstreams:
 api_keys:
   jwt:
     - id: dev
-      key: "EWRWL"
+      key: "jwt-secret-key-at-least-32-bytes1"
     - id: test
-      key: "sdkfjiwef2831yhfwuoefasdfkoqd9029"
+      key: "jwt-secret-key-at-least-32-bytes2"
 "#;
 
     let config: Config =
@@ -4864,7 +4864,7 @@ api_keys:
     assert_eq!(jwt_keys.len(), 2, "should have 2 JWT keys");
     assert_eq!(jwt_keys[0].id, "dev", "first JWT key should have id 'dev'");
     assert_eq!(
-        jwt_keys[0].key, "EWRWL",
+        jwt_keys[0].key, "jwt-secret-key-at-least-32-bytes1",
         "first JWT key should have correct key"
     );
     assert_eq!(
@@ -4872,7 +4872,7 @@ api_keys:
         "second JWT key should have id 'test'"
     );
     assert_eq!(
-        jwt_keys[1].key, "sdkfjiwef2831yhfwuoefasdfkoqd9029",
+        jwt_keys[1].key, "jwt-secret-key-at-least-32-bytes2",
         "second JWT key should have correct key"
     );
 
@@ -4899,7 +4899,7 @@ api_keys:
         serde_json::Value::Number(serde_json::Number::from(exp)),
     );
 
-    let encoding_key = EncodingKey::from_secret("EWRWL".as_bytes());
+    let encoding_key = EncodingKey::from_secret("jwt-secret-key-at-least-32-bytes1".as_bytes());
     let token = encode(&header, &claims, &encoding_key).expect("should create JWT token");
 
     // Verify that authentication works
