@@ -167,6 +167,12 @@ must reject the configuration.
 
 **Tags:** `config-validation`, `authentication`, `security`, `jwt-auth`
 
+**Related Requirements:**
+
+- C16.2: Base requirement for JWT key presence and non-emptiness
+- F19: JWT algorithm must be HS256
+- F22: Signature verification using HS256
+
 ---
 
 ## Unit Tests
