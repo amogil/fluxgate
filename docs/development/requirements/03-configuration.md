@@ -73,7 +73,7 @@ etc.), the reload attempt must fail, the previous configuration must be retained
 | `api_keys.static[].upstreams`   | Empty list     | Optional | List of upstream identifiers this key may access<br>(must match configured upstream names)<br>When empty or omitted, the API key has access to all configured upstreams<br>When empty and no upstreams are configured, requests with this API key are rejected with HTTP 401                                                                                                                                        |
 | `api_keys.jwt`                  | _None_         | Optional | List of JWT client API keys<br>(may be omitted or empty)                                                                                                                                                                                                                                                                                                                                                            |
 | `api_keys.jwt[].id`             | _None_         | Required | Human-readable label for the JWT API key (for observability only, used in logs)<br>Must be non-empty and unique across all JWT API keys                                                                                                                                                                                                                                                                             |
-| `api_keys.jwt[].key`            | _None_         | Required | JWT API key value used for verifying JWT token signatures<br>(must be non-empty string; may be duplicated across different JWT entries)                                                                                                                                                                                                                                                                             |
+| `api_keys.jwt[].key`            | _None_         | Required | JWT API key value used for verifying JWT token signatures<br>(must be non-empty string with minimum length of 32 bytes per RFC 7518; may be duplicated across different JWT entries)                                                                                                                                                                                                                                |
 
 **Tags:** `config-validation`, `config-loading`
 
@@ -159,6 +159,13 @@ need to be unique and may be duplicated across different JWT configuration entri
 and JWT tokens are validated using signature verification rather than direct string comparison.
 
 **Tags:** `config-validation`, `authentication`
+
+**C16.3.** Configuration validation must ensure that `api_keys.jwt[].key` has a minimum length of 32 bytes.
+This requirement is based on RFC 7518, Section 3.2, which mandates that keys for HMAC-SHA256 (HS256) must be
+at least 256 bits (32 bytes) to maintain cryptographic security. If the key is shorter than 32 bytes, validation
+must reject the configuration.
+
+**Tags:** `config-validation`, `authentication`, `security`, `jwt-auth`
 
 ---
 
