@@ -1,6 +1,6 @@
 //! Unit tests for JWT token authentication.
 //!
-//! # Requirements: F17.1, F18, F19, F20, F21, F22, F23, F24, C16.1, C16.2
+//! # Requirements: F17.1, F18, F19, F20, F21, F22, F23, F24, C16.1, C16.2, C16.3
 //!
 //! This module contains unit tests for JWT token authentication functionality,
 //! including token parsing, validation, signature verification, and configuration validation.
@@ -614,8 +614,8 @@ fn test_validate_config_jwt_id_valid() {
     // Action: Validate configuration
     // Expected behavior: Validation succeeds
     // Covers Requirements: C16.1
-    let jwt_key1 = test_jwt_key("dev", "secret-key1");
-    let jwt_key2 = test_jwt_key("test", "secret-key2");
+    let jwt_key1 = test_jwt_key("dev", "secret-key-at-least-32-bytes-001");
+    let jwt_key2 = test_jwt_key("test", "secret-key-at-least-32-bytes-002");
     let config = Config {
         version: SUPPORTED_CONFIG_VERSION,
         server: test_server_config(),
@@ -660,8 +660,8 @@ fn test_validate_config_jwt_key_can_be_duplicated() {
     // Action: Validate configuration
     // Expected behavior: Validation succeeds (JWT keys can be duplicated)
     // Covers Requirements: C16.2
-    let jwt_key1 = test_jwt_key("dev", "same-secret");
-    let jwt_key2 = test_jwt_key("test", "same-secret"); // Same key, different id
+    let jwt_key1 = test_jwt_key("dev", "same-secret-key-at-least-32-bytes!");
+    let jwt_key2 = test_jwt_key("test", "same-secret-key-at-least-32-bytes!"); // Same key, different id
     let config = Config {
         version: SUPPORTED_CONFIG_VERSION,
         server: test_server_config(),
@@ -683,10 +683,10 @@ fn test_validate_config_jwt_key_can_match_static_key() {
     // Covers Requirements: C16.2
     let static_key = StaticApiKey {
         id: Some("static-key".to_string()),
-        key: "shared-secret".to_string(),
+        key: "shared-secret-key-at-least-32-bytes".to_string(),
         upstreams: None,
     };
-    let jwt_key = test_jwt_key("jwt-key", "shared-secret"); // Same key as static
+    let jwt_key = test_jwt_key("jwt-key", "shared-secret-key-at-least-32-bytes"); // Same key as static
     let config = Config {
         version: SUPPORTED_CONFIG_VERSION,
         server: test_server_config(),
@@ -1306,4 +1306,50 @@ fn test_authenticate_jwt_works_without_static_section() {
             .contains(&"upstream2".to_string()),
         "JWT should have access to upstream2"
     );
+}
+
+#[test]
+fn test_validate_config_jwt_key_too_short() {
+    // Precondition: Config with JWT key shorter than 32 bytes
+    // Action: Validate configuration
+    // Expected behavior: Validation fails with error about minimum key length
+    // Covers Requirements: C16.3
+    let jwt_key = JwtApiKey {
+        id: "dev".to_string(),
+        key: "short-key-only-20-bytes".to_string(), // 23 bytes, less than 32
+    };
+    let config = Config {
+        version: SUPPORTED_CONFIG_VERSION,
+        server: test_server_config(),
+        upstreams: None,
+        api_keys: Some(test_api_keys_config_with_jwt(vec![], Some(vec![jwt_key]))),
+    };
+    let result = config.validate();
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    let reasons = err.reasons();
+    assert!(reasons
+        .iter()
+        .any(|r| r.contains("api_keys.jwt[0].key must be at least 32 bytes")));
+}
+
+#[test]
+fn test_validate_config_jwt_key_minimum_length() {
+    // Precondition: Config with JWT key exactly 32 bytes
+    // Action: Validate configuration
+    // Expected behavior: Validation succeeds (key meets minimum length)
+    // Covers Requirements: C16.3
+    let jwt_key = JwtApiKey {
+        id: "dev".to_string(),
+        key: "exactly-32-bytes-key-for-hs256!!".to_string(), // Exactly 32 bytes
+    };
+    assert_eq!(jwt_key.key.len(), 32, "Test key must be exactly 32 bytes");
+    let config = Config {
+        version: SUPPORTED_CONFIG_VERSION,
+        server: test_server_config(),
+        upstreams: None,
+        api_keys: Some(test_api_keys_config_with_jwt(vec![], Some(vec![jwt_key]))),
+    };
+    let result = config.validate();
+    assert!(result.is_ok(), "Validation should pass for 32-byte key");
 }

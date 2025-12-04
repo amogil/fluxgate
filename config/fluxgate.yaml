@@ -36,6 +36,6 @@ api_keys:
         - anthropic-2
   jwt:
     - id: dev
-      key: "REPLACE_WITH_API_KEY3"
+      key: "REPLACE_WITH_JWT_SECRET_KEY_MIN_32_BYTES"
     - id: test
-      key: "REPLACE_WITH_API_KEY4"
+      key: "REPLACE_WITH_JWT_SECRET_KEY_MIN_32_BYTES"

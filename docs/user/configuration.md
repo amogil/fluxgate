@@ -149,13 +149,13 @@ For an introduction to JWT tokens and how they work, see [jwt.io](https://jwt.io
 api_keys:
   jwt:
     - id: dev                   # Required: must match 'kid' in JWT header
-      key: "secret-key-123"     # Required: secret used to sign/verify tokens
+      key: "your-secret-key-at-least-32-bytes!"  # Required: min 32 bytes
     - id: test                  # Required: unique identifier
-      key: "secret-key-456"     # Can be same or different from other JWT keys
+      key: "another-secret-key-32-bytes-min!"    # Can be same or different
 ```
 
 - **`id`** (required): Must match the `kid` (key ID) field in the JWT token header. Must be unique across all JWT API keys
-- **`key`** (required): The secret key used to sign and verify JWT tokens. Can be duplicated across different JWT entries (allowing multiple `id` values to share the same secret)
+- **`key`** (required): The secret key used to sign and verify JWT tokens. **Must be at least 32 bytes** (256 bits) as required by RFC 7518 for HS256 algorithm. Can be duplicated across different JWT entries (allowing multiple `id` values to share the same secret)
 
 #### JWT Token Requirements
 

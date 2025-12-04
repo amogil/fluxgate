@@ -374,7 +374,7 @@ fn proxy_authenticates_with_valid_jwt_token() {
         let mock_server = MockServer::start().await.expect("start mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600; // Valid for 1 hour
 
@@ -430,7 +430,7 @@ fn proxy_rejects_jwt_when_static_key_matches_first() {
         let bind_addr = allocate_socket_addr();
 
         let static_key = "shared-key-value";
-        let jwt_secret = "jwt-secret-key";
+        let jwt_secret = "jwt-secret-key-at-least-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
 
@@ -506,7 +506,7 @@ fn proxy_rejects_expired_jwt_token() {
         let mock_server = MockServer::start().await.expect("start mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() - 60; // Expired 60 seconds ago
 
@@ -553,7 +553,7 @@ fn proxy_rejects_jwt_token_without_upstreams() {
     run_async_test(|| async {
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
 
@@ -600,7 +600,7 @@ fn proxy_rejects_jwt_token_with_invalid_signature() {
         let mock_server = MockServer::start().await.expect("start mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let wrong_secret = "wrong-secret-key";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
@@ -651,7 +651,7 @@ fn proxy_routes_jwt_authenticated_requests_by_path() {
         let mock_server2 = MockServer::start().await.expect("start second mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
 
@@ -713,7 +713,7 @@ fn proxy_selects_longest_matching_path_for_jwt_requests() {
         let mock_server2 = MockServer::start().await.expect("start second mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
 
@@ -762,7 +762,7 @@ fn proxy_preserves_request_details_for_jwt_authenticated_requests() {
         let mock_server = MockServer::start().await.expect("start mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
 
@@ -821,7 +821,7 @@ fn proxy_rejects_jwt_token_when_path_doesnt_match() {
         let mock_server = MockServer::start().await.expect("start mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
 
@@ -867,7 +867,7 @@ fn proxy_handles_jwt_token_that_looks_like_static_key() {
         let bind_addr = allocate_socket_addr();
 
         let static_key = "some-static-key";
-        let jwt_secret = "jwt-secret-key";
+        let jwt_secret = "jwt-secret-key-at-least-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
 
@@ -918,7 +918,7 @@ fn proxy_handles_concurrent_jwt_authenticated_requests() {
         let mock_server = MockServer::start().await.expect("start mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
 
@@ -979,7 +979,7 @@ fn proxy_logs_jwt_key_id_in_request_logs() {
         let mock_server = MockServer::start().await.expect("start mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key-id";
         let exp = current_timestamp() + 3600;
 
@@ -1030,7 +1030,7 @@ fn proxy_handles_different_http_methods_with_jwt() {
         let mock_server = MockServer::start().await.expect("start mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
 
@@ -1104,7 +1104,7 @@ fn proxy_handles_jwt_authentication_with_query_parameters() {
         let mock_server = MockServer::start().await.expect("start mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
 
@@ -1154,7 +1154,7 @@ fn proxy_handles_jwt_authentication_with_large_request_body() {
         let mock_server = MockServer::start().await.expect("start mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
 
@@ -1204,7 +1204,7 @@ fn proxy_handles_jwt_authentication_with_streaming_response() {
         let mock_server = MockServer::start().await.expect("start mock server");
         let bind_addr = allocate_socket_addr();
 
-        let jwt_secret = "test-jwt-secret-key";
+        let jwt_secret = "test-jwt-secret-key-min-32-bytes!";
         let jwt_kid = "test-jwt-key";
         let exp = current_timestamp() + 3600;
 
@@ -1251,7 +1251,7 @@ fn proxy_prioritizes_static_keys_over_jwt_when_both_configured() {
         let bind_addr = allocate_socket_addr();
 
         let static_key = "static-api-key-123";
-        let jwt_secret = "jwt-secret-key";
+        let jwt_secret = "jwt-secret-key-at-least-32-bytes!";
         let jwt_kid = "jwt-key-id";
         let exp = current_timestamp() + 3600;
 
